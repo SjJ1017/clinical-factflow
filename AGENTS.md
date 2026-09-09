@@ -215,3 +215,10 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Started tmux `clinical-match-gpu0`, output `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu0`, model PID 918462. Actual physical UUID GPU-afd80b26-8193-fc3a-11cf-c26844f7a619 matched PyTorch, CUDA kernel check passed, BF16 Qwen loaded, and 336 real bidirectional judgments had been saved at verification. Do not confuse initialization logs with completion. Check current process/ledger before any resume.
 - GPU 4 was idle at initial inspection but another user's job (dkarzanov, PID 913736) started before our launch. The guard refused to launch gpu4. **No second tmux or automatic waiter is running.** Do not use other GPUs or share GPU 4 without new user guidance. The async question asks whether to wait for a new user notification or queue the second shard on GPU 0; no answer yet at this writing.
 - Follow-up must preserve this split; do not run the full bundle on GPU 0 while its first shard is already active. Matching defaults unchanged: 0.62/top12/batch16/margin5.28.
+
+
+## GPU 1 sharing explicitly authorized (2026-09-10)
+
+- Latest user explicitly chooses to share physical GPU 1 despite the stable ~0.9 GB / ~10% existing job, and requests a check five minutes after launch. This supersedes the no-sharing restriction for GPU 1 only. Do not stop or alter the other user's process.
+- `ALLOW_GPU_SHARING=1` explicitly enables sharing in the launcher; UUID binding, CUDA verification and at least 38,000 MiB free remain required. Default launches still reject sharing.
+- Second shard remains `exports/medcase24-two-gpu/gpu4` (historical assignment name), 128,601 pairs, but is to run in tmux `clinical-match-gpu1` with output `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1`. Never also launch its gpu4 copy. GPU 0 continues its separate shard.

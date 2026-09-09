@@ -13,7 +13,7 @@ def query(fields, kind="gpu"):
     )
 
 
-def select_idle_gpu(gpus, apps, selected):
+def select_idle_gpu(gpus, apps, selected, allow_shared=False):
     rows = [
         list(map(str.strip, line.split(",")))
         for line in gpus.splitlines()
@@ -27,26 +27,44 @@ def select_idle_gpu(gpus, apps, selected):
         raise RuntimeError(
             f"GPU {index} ({name}) has insufficient memory for default BF16 Qwen14B"
         )
-    if any(line.split(",")[0].strip() == uuid for line in apps.splitlines()):
+    used, util = int(used), int(util)
+    if int(total) - used < 38000:
+        raise RuntimeError(f"GPU {index} has less than 38000 MiB free")
+    if not allow_shared and any(
+        line.split(",")[0].strip() == uuid for line in apps.splitlines()
+    ):
         raise RuntimeError(
             f"GPU {index} has an existing compute process; refusing to share it"
         )
-    if int(used) > 256 or int(util) > 0:
+    if not allow_shared and (used > 256 or util > 0):
         raise RuntimeError(
             f"GPU {index} is not idle: {used} MiB used, {util}% utilization"
         )
-    return {"index": index, "uuid": uuid, "name": name, "total_mib": int(total)}
+    return {
+        "index": index,
+        "uuid": uuid,
+        "name": name,
+        "total_mib": int(total),
+        "sharing_authorized": allow_shared,
+        "preexisting_used_mib": used,
+    }
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--gpu", required=True)
     p.add_argument("--verify-torch", action="store_true")
+    p.add_argument(
+        "--allow-shared",
+        action="store_true",
+        help="Use only after explicit user authorization to share this GPU",
+    )
     args = p.parse_args()
     selected = select_idle_gpu(
         query("index,uuid,name,memory.total,memory.used,utilization.gpu"),
         query("gpu_uuid,pid", "compute-apps"),
         args.gpu,
+        allow_shared=args.allow_shared,
     )
     if not args.verify_torch:
         print(selected["uuid"])

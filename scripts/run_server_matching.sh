@@ -9,6 +9,9 @@ CONFIG="${MATCH_CONFIG:-outputs/matching-chewie.yaml}"
 BUNDLE="${MATCH_BUNDLE:-exports/medcase24-atoms}"
 OUT="${MATCH_OUT:-$SCRATCH_ROOT/clinical-factflow/medcase24-pairs}"
 SESSION="${MATCH_SESSION:-clinical-matching}"
+SHARING="${ALLOW_GPU_SHARING:-0}"
+SHARE_ARGS=()
+if [[ "$SHARING" == "1" ]]; then SHARE_ARGS+=(--allow-shared); fi
 export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ "${1:-}" != "--inside-tmux" ]]; then
@@ -16,13 +19,13 @@ if [[ "${1:-}" != "--inside-tmux" ]]; then
     [[ -x "$PY" && -f "$CONFIG" && -f "$BUNDLE/manifest.json" ]] || {
         echo "Missing Python, resolved configuration or atom bundle" >&2; exit 1;
     }
-    UUID="$("$PY" scripts/check_matching_gpu.py --gpu "$GPU")"
+    UUID="$("$PY" scripts/check_matching_gpu.py --gpu "$GPU" "${SHARE_ARGS[@]}")"
     tmux has-session -t "=$SESSION" 2>/dev/null && {
         echo "tmux session $SESSION already exists; inspect it before resuming" >&2; exit 1;
     }
     printf -v COMMAND '%q ' env "GPU=$GPU" "EXPECTED_GPU_UUID=$UUID" \
         "SCRATCH_ROOT=$SCRATCH_ROOT" "PYTHON=$PY" "MATCH_CONFIG=$CONFIG" \
-        "MATCH_BUNDLE=$BUNDLE" "MATCH_OUT=$OUT" "MATCH_SESSION=$SESSION" \
+        "MATCH_BUNDLE=$BUNDLE" "MATCH_OUT=$OUT" "MATCH_SESSION=$SESSION" "ALLOW_GPU_SHARING=$SHARING" \
         bash "$ROOT/scripts/run_server_matching.sh" --inside-tmux
     tmux new-session -d -s "$SESSION" "$COMMAND"
     echo "Started tmux session: $SESSION; physical GPU $GPU ($UUID)"
@@ -50,5 +53,5 @@ export PIP_CACHE_DIR="$SCRATCH_ROOT/pip-cache" HF_HUB_OFFLINE=1 TRANSFORMERS_OFF
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
 mkdir -p "$TMPDIR" "$TORCH_HOME" "$XDG_CACHE_HOME" "$TRITON_CACHE_DIR"
 # Resolve again inside tmux before any CUDA allocation. Never fall back to another GPU.
-"$PY" scripts/check_matching_gpu.py --gpu "$EXPECTED_GPU_UUID" --verify-torch
+"$PY" scripts/check_matching_gpu.py --gpu "$EXPECTED_GPU_UUID" --verify-torch "${SHARE_ARGS[@]}"
 "$PY" scripts/server_match.py --bundle "$BUNDLE" --out "$OUT" --config "$CONFIG"

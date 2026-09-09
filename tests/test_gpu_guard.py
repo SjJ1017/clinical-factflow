@@ -26,3 +26,19 @@ def test_selects_physical_uuid_and_rejects_busy_or_small_cards():
 def test_unknown_telemetry_fails_closed():
     with pytest.raises((RuntimeError, ValueError)):
         guard.select_idle_gpu(GPUS.replace("46068, 2, 0", "46068, 2, N/A"), "", "4")
+
+
+def test_explicit_sharing_keeps_memory_and_identity_guards():
+    gpus = "1, GPU-shared, Blackwell, 97887, 900, 10\n"
+    result = guard.select_idle_gpu(gpus, "GPU-shared, 99", "1", allow_shared=True)
+    assert result["uuid"] == "GPU-shared" and result["sharing_authorized"]
+    with pytest.raises(RuntimeError):
+        guard.select_idle_gpu(gpus, "GPU-shared, 99", "1")
+    with pytest.raises(RuntimeError, match="less than"):
+        guard.select_idle_gpu(
+            gpus.replace("97887, 900", "97887, 70000"), "", "1", allow_shared=True
+        )
+    with pytest.raises(RuntimeError):
+        guard.select_idle_gpu(gpus, "", "0", allow_shared=True)
+    with pytest.raises(ValueError):
+        guard.select_idle_gpu(gpus.replace(", 10", ", N/A"), "", "1", allow_shared=True)
