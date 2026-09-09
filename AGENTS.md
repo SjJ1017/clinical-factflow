@@ -207,3 +207,11 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - User reports physical GPU 0 and 4 idle and explicitly requests splitting data and starting both. This supersedes the previous stop/wait instruction; syncing the prepared launcher is part of the authorized launch. Use these two GPUs only.
 - Split whole case inventories by saved default candidate counts, not facts inside a case; preserve the frozen node pool, defaults and both directional judgments. Separate tmux names and output ledgers per GPU. GPU UUID checks remain mandatory.
 - `scripts/split_matching_bundle.py` creates disjoint, complete case shards and `plan.json`; each shard retains the complete parent extraction's record provenance and explicitly marks its selected-case scope. Preserve both output directories and the plan for later whole-study analysis.
+
+
+## 2026-09-10 launch result — GPU 0 running, GPU 4 blocked by a new job
+
+- Commit e5d7c70 was pushed and pulled on Chewie. `exports/medcase24-two-gpu/plan.json` assigns 12 complete cases / 128,210 candidate pairs to gpu0 and 12 / 128,601 to gpu4 (4.91h and 4.93h at the planning rate). Whole-case bytes and ranking pools are unchanged.
+- Started tmux `clinical-match-gpu0`, output `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu0`, model PID 918462. Actual physical UUID GPU-afd80b26-8193-fc3a-11cf-c26844f7a619 matched PyTorch, CUDA kernel check passed, BF16 Qwen loaded, and 336 real bidirectional judgments had been saved at verification. Do not confuse initialization logs with completion. Check current process/ledger before any resume.
+- GPU 4 was idle at initial inspection but another user's job (dkarzanov, PID 913736) started before our launch. The guard refused to launch gpu4. **No second tmux or automatic waiter is running.** Do not use other GPUs or share GPU 4 without new user guidance. The async question asks whether to wait for a new user notification or queue the second shard on GPU 0; no answer yet at this writing.
+- Follow-up must preserve this split; do not run the full bundle on GPU 0 while its first shard is already active. Matching defaults unchanged: 0.62/top12/batch16/margin5.28.
