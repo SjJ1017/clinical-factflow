@@ -137,7 +137,8 @@ header; the client now provides both and preserves separate agent conversations.
 ## Revised same-patient diagnosis validation
 
 [Protocol, per-round accuracy, measured Go usage and 120-trace forecast](docs/revised-smoke-20260909.md).
-The 120-case-condition study is prepared but awaits explicit user approval. Shared
+The user approved the 120-case-condition generation study on 2026-09-09, with
+later [LLM-assisted, level-aware evaluation](docs/diagnosis-evaluation.md). Shared
 patient metadata is limited to an opaque study ID, age and sex as reported. Every
 revised diagnostic turn ends in a dedicated `final_diagnosis`; majority voting uses
 that field rather than the explanation. Disease-only formatting does not guarantee

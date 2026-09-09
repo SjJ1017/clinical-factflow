@@ -40,9 +40,10 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 ## Revised smoke and approval gate (2026-09-09)
 
 - Read `docs/revised-smoke-20260909.md` before the 24 × 5 study. Two revised
-  split-specialist traces are complete; all 120 main-study traces await explicit
-  user approval of the reported cost/time/results. Do not treat a prior request
-  to prepare configs as approval to execute them.
+  split-specialist traces are complete. On 2026-09-09 the user approved execution
+  of all 120 main-study traces conditional on later level-aware, LLM-assisted
+  evaluation. That condition is documented in `docs/diagnosis-evaluation.md`.
+  Generation is now authorized; extraction/matching/judging are separate stages.
 - New runs share only an opaque patient ID, age and reported sex, and explicitly
   state that peer reports concern the same patient. These common fields are
   deliberate duplicates, not three independent sources of evidence.
@@ -53,3 +54,11 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
   never depend on the old checkout for credentials or commit real key values.
 - The user explicitly deferred extraction/atomization fixes. Do not silently
   bundle them into this diagnostic protocol change or spend API calls on them.
+
+## User-approved evaluation (2026-09-09)
+
+- Use precise_correct / level_correct / incorrect after reference-aware clinical
+  comparison, with explicit unresolved review flags. Exact strings alone are not
+  the primary metric. Read `docs/diagnosis-evaluation.md`.
+- Semantic system aggregation must be reference-blind. Never resolve a vote using
+  gold labels or count individually correct agents as the system prediction.
