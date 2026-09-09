@@ -34,7 +34,15 @@ class Annotation(Strict):
     attribution: Literal["direct", "reported", "unknown"]
     certainty: Literal["asserted", "probable", "possible", "conditional", "unclear"]
     polarity: Literal["affirmed", "negated"]
-    clinical_domain: Literal["history", "examination", "laboratory", "imaging", "pathology", "diagnosis", "treatment", "other"]
+    clinical_domain: list[Literal["history", "examination", "laboratory", "imaging", "pathology", "diagnosis", "treatment", "other"]] = Field(min_length=1, max_length=8)
+
+    @field_validator("clinical_domain")
+    @classmethod
+    def domain_set(cls, value):
+        if len(set(value)) != len(value) or ("other" in value and len(value) > 1):
+            raise ValueError("Domains must be unique; other is exclusive")
+        return sorted(value)
+
     attributed_to: str | None = None
 
 

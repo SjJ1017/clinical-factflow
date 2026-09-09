@@ -8,7 +8,7 @@ The vocabulary is an initial operational proposal, not a validated clinical onto
 | attribution | direct, reported, unknown | Is it explicitly attributed to another speaker, patient or report? |
 | certainty | asserted, probable, possible, conditional, unclear | How strongly is this occurrence presented? |
 | polarity | affirmed, negated | Does the proposition explicitly deny something? |
-| clinical_domain | history, examination, laboratory, imaging, pathology, diagnosis, treatment, other | What evidence or clinical activity does it concern? |
+| clinical_domain | Nonempty list drawn from history, examination, laboratory, imaging, pathology, diagnosis, treatment, other | Which domains does this proposition explicitly concern? Multiple labels are allowed. |
 | attributed_to | text or null | Who or what was explicitly named as the source? |
 
 "The patient reports no pain" is a **reported, negated observation**. "Agent B suggests pneumonia" is a **reported, possible inference**. "The CT report lacks a comparison scan" is a **discourse** claim about documentation, not a finding that the patient has no disease. A recommendation preserves its modality: "If bleeding persists, consider endoscopy" does not assert that an endoscopy occurred.
@@ -20,3 +20,21 @@ All quotes reference the original text. A quote with several atomized children r
 To build interpretable profiles later, one can count observations vs inferences, uncertainty, pertinent negatives, numerical qualifiers, and actually available source/peer facts. Do not make the classifier's target answer or role label an extraction input. More importantly, **absent from the gold rationale does not mean false**. Truth assessment needs a separate, explicitly scoped reference and human checks, especially for recommendations and plausible alternate diagnoses.
 
 Nonmedical work should introduce a versioned domain vocabulary with domain examples and independent validation. The runner and canonical evidence schema are reusable; the current clinical taxonomy should not be relabeled as a universal ontology.
+
+## Multi-domain measurement version (2026-09-09)
+
+`clinical-domain-multilabel-v1` keeps all existing atom and annotation fields. Only
+`clinical_domain` changes from one string to a nonempty list of unique labels;
+`other` is exclusive, and list order is normalized for stable identity. Historical
+single-domain artifacts remain untouched and must not be mixed into this version.
+
+Label the individual proposition, not the role or evidence partition. For example,
+“CT shows a mass” is imaging; “the CT pattern favors carcinoma” is imaging +
+diagnosis. A biopsy finding is pathology, not automatically laboratory. Ordinary
+historical wording does not add history to every past scan/test/intervention.
+Child atoms receive their own labels after splitting. The full rubric and examples
+are frozen in `configs/extraction/minimax-pilot-20260909.yaml`.
+
+This pilot tests the existing minimal structure; it does not add clinical truth,
+causal reasoning graphs, correctness, salience or gold-diagnosis labels to atoms.
+Review findings live in a separate audit, never as silently corrected model output.

@@ -161,3 +161,9 @@ set +a
 All 1,080 diagnostic outputs are saved locally. LLM-assisted precise/level-correct/incorrect
 evaluation is a separate pending stage; literal majority is not the primary accuracy
 metric. The generation run has not executed extraction, atomization or matching.
+
+
+MiniMax extraction quality pilot: [2026-09-09 audit](docs/minimax-extraction-pilot-20260909.md).
+Ten texts completed (162 final mentions), but input-only imports and domain omissions
+make the current output extraction unsuitable for a full measurement corpus without
+further validation. The versioned pilot keeps the atom fields and makes domains multi-select.

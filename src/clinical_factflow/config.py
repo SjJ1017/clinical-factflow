@@ -17,6 +17,7 @@ def digest(value) -> str:
 
 
 class Model(Strict):
+    api_format: Literal["openai", "anthropic"] = "openai"
     model: str
     base_url: str
     api_key_env: str | None = None
@@ -32,9 +33,11 @@ class Model(Strict):
         p = urlparse(self.base_url)
         if p.scheme not in ("http", "https") or not p.hostname or p.username or p.password or p.query:
             raise ValueError("base_url must be an HTTP(S) URL without embedded credentials")
-        forbidden = {"model", "messages", "temperature", "max_tokens", "seed", "stream"}
+        forbidden = {"model", "messages", "temperature", "max_tokens", "seed", "stream", "system"}
         if forbidden & self.extra_body.keys():
             raise ValueError("extra_body cannot override controlled model/request fields")
+        if self.api_format == "anthropic" and self.seed is not None:
+            raise ValueError("Anthropic messages does not support seed")
         return self
 
     def remote(self):

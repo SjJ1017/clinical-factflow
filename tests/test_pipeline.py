@@ -39,7 +39,7 @@ class FakeClient:
 def synthetic_atom(text, quote=None, polarity="affirmed", kind="observation"):
     return Atom(text=text, quote=quote or text, qualifiers=[], annotation={
         "kind":kind,"attribution":"direct","certainty":"asserted","polarity":polarity,
-        "clinical_domain":"laboratory","attributed_to":None})
+        "clinical_domain":["laboratory"],"attributed_to":None})
 
 
 def test_topology_presets_only_change_topology(cfg):
@@ -240,7 +240,8 @@ def test_remote_data_gate(cfg,tmp_path):
 
 
 def test_http_empty_retry_and_private_audit(cfg,tmp_path,monkeypatch):
-    # Real client path, mocked transport; verifies an empty result is not cached.
+    # Real OpenAI client path, mocked transport; verifies an empty result is not cached.
+    cfg.extraction.model.api_format = "openai"
     monkeypatch.setenv(cfg.extraction.model.api_key_env,"test-key-must-not-be-written")
     results=[{"facts":[]},{"facts":[synthetic_atom("Na 128 mmol/L.").model_dump()]}]
     class Response:

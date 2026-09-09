@@ -71,3 +71,25 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
   and the separate pending three-label judging stage. No judged accuracy exists yet.
 - R1–R3 are reusable for a future explicit R4+ continuation, but no continuation
   entry point exists yet. Do not edit original YAMLs or silently rewrite parent runs.
+
+
+## MiniMax extraction audit (2026-09-09)
+
+- User authorized only a small MiniMax extraction/atomization quality check and
+  explicitly rejected additional atom attributes. It is complete: see
+  `docs/minimax-extraction-pilot-20260909.md` and the existing ignored
+  `runs/minimax-extraction-pilot-20260909/` before any new API work.
+- Keep atom fields unchanged; `clinical_domain` is now a nonempty multi-label list
+  of the existing vocabulary. Old string-domain artifacts are a different version.
+- MiniMax M2.5 on Go uses `api_format: anthropic` (`/messages`); DeepSeek generation
+  remains OpenAI-compatible. Native Anthropic cache counters are separate from input.
+- The pilot failed grounding readiness: 20 input-only imports in one R3 sample;
+  137/162 mentions had exact target quotes; 24 clear domain problems, 12 boundaries.
+  Short direct sources looked better; do not infer a model-wide quality rate or role effect.
+- Both extraction and atomization can import context-only facts. Do not solve this by
+  labeling imported facts as false, deleting them silently, or loosening matching.
+- Do not rewrite the completed 120 generation configs/artifacts or regenerate them
+  to adopt the new extraction schema. This pilot has its own parent-linked hashes.
+- All calls including an 8,000-token truncation are accounted: 10.74 min, estimated
+  $0.07663 Go allowance. Twelve responses omit cache fields; no cash-bill reconciliation.
+- No full extraction, matching, or paid diagnosis judging was authorized by this audit request.

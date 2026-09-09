@@ -1,4 +1,4 @@
-"""Small OpenAI-compatible HTTP client with per-attempt audit, no generation cache."""
+"""Small OpenAI/Anthropic-compatible HTTP client with per-attempt audit, no generation cache."""
 from __future__ import annotations
 
 import json
@@ -39,12 +39,22 @@ class Client:
         if s.seed is not None:
             # Deterministic, distinct agent/case/turn streams; paired across topology conditions.
             payload["seed"] = int(digest([s.seed, sample_id])[:8], 16)
+        path = "/chat/completions"
+        if s.api_format == "anthropic":
+            path = "/messages"
+            payload["system"] = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+            payload["messages"] = [m for m in messages if m["role"] != "system"]
         headers = {"Content-Type": "application/json", "User-Agent": "clinical-factflow/0.1"}
         if s.api_key_env:
             key = os.environ.get(s.api_key_env)
             if not key:
                 raise ValueError(f"Missing environment variable {s.api_key_env}")
-            headers["Authorization"] = "Bearer " + key
+            if s.api_format == "anthropic":
+                headers["x-api-key"] = key
+            else:
+                headers["Authorization"] = "Bearer " + key
+        if s.api_format == "anthropic":
+            headers["anthropic-version"] = "2023-06-01"
         # Provider routing session: stable per agent conversation and retries.
         # This is our own client/session identity, not an impersonated coding client.
         conversation = sample_id.split("/round:")[0].split("/atomize/")[0]
@@ -57,24 +67,30 @@ class Client:
         for attempt in range(1, s.attempts + 1):
             call_id = uuid.uuid4().hex
             log = {"call_id": call_id, "sample_id": sample_id, "attempt": attempt,
-                   "endpoint": s.base_url, "session_id": session_id, "request": payload}
+                   "endpoint": s.base_url.rstrip("/") + path, "api_format": s.api_format, "session_id": session_id, "request": payload}
             start = time.perf_counter()
             try:
-                request = urllib.request.Request(s.base_url.rstrip("/") + "/chat/completions",
+                request = urllib.request.Request(s.base_url.rstrip("/") + path,
                     data=json.dumps(payload).encode(), headers=headers, method="POST")
                 with urllib.request.urlopen(request, timeout=s.timeout_seconds) as f:
                     raw = json.load(f)
                 log["response"] = raw
-                choice = raw["choices"][0]
-                if choice.get("finish_reason") in {"length", "content_filter"}:
-                    raise ValueError(f"Incomplete response: {choice['finish_reason']}")
-                value = response_model.model_validate(json_object(choice["message"]["content"]))
+                if s.api_format == "anthropic":
+                    if raw.get("stop_reason") != "end_turn":
+                        raise ValueError(f"Incomplete response: {raw.get('stop_reason')}")
+                    content = "".join(b["text"] for b in raw["content"] if b["type"] == "text")
+                else:
+                    choice = raw["choices"][0]
+                    if choice.get("finish_reason") in {"length", "content_filter"}:
+                        raise ValueError(f"Incomplete response: {choice['finish_reason']}")
+                    content = choice["message"]["content"]
+                value = response_model.model_validate(json_object(content))
                 if validate:
                     validate(value)
                 log["status"] = "ok"
                 return value, {"call_id": call_id, "usage": raw.get("usage"),
                                "response_model": raw.get("model"), "system_fingerprint": raw.get("system_fingerprint"),
-                               "raw_text": choice["message"]["content"], "messages": messages,
+                               "raw_text": content, "messages": messages,
                                "latency_seconds": time.perf_counter() - start}
             except Exception as exc:
                 last = exc
