@@ -125,6 +125,8 @@ python -m clinical_factflow.server_matching export \
 
 Second-pass judgments append to history, leaving the original policy unchanged. Unselected pairs inherit exactly the specified parent policy; finish the parent before selective review. This is a new observation from the same model/configuration, not independent expert validation; deterministic local scores may be identical. For a different adjudicator or manual review, the exported pair IDs/texts and prior scores are the handoff material; preserve that as a separate measurement setting.
 
+Validation results: [2026-09-09 execution report](server-matching-validation-20260909.md).
+
 ## Offline interface tests
 
 ```bash

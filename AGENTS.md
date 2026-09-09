@@ -173,3 +173,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Every same-case distinct-node pair has a row. Blocker and local-model negatives share UNRELATED; model failures remain null/pending. Store lexical components, cosine, endpoint ranks, both directional YES/NO logits/log masses and margins, settings and decision provenance. Never drop blocker negatives.
 - Threshold policies append to the ledger; selected boundary rejudgments append observations. Missing scores after blocker expansion need actual scoring. Old labels and observations stay available. Real Qwen GPU accuracy/performance is not established by synthetic interface tests.
 - Git excludes real data/ledgers. Transfer the generated atom archive separately. Mock outputs use test_data=true and cannot be cited as semantic results.
+
+
+## Extraction paused by API 2 weekly quota — latest state
+
+- Resumed queue stopped cleanly at 1,157/1,487 completed (541 new); 330 remain. API 2 returned HTTP 429 / GoUsageLimitError / weekly, with about four days until reset. A single probe confirmed it. Do not repeatedly retry this known quota failure or enable paid balance.
+- All saved record/task hashes and frozen extraction sources verified; 67/120 traces fully covered. Read the ignored queue's `sessions/2026-09-09-resume-summary.json` and `provider-limit-probe.json`. The earlier 616-record first-session summary remains intact.
+- Schema-retry code is offline-tested but has not been used on production records. API 1 continuation is awaiting the user's choice; do not claim that it has started.
+- The server code is validated by 79 offline tests, independent Git-clone/Python 3.12 installation, and a 299,925-pair actual-atom/real-BGE/random-logit export. See `docs/server-matching-validation-20260909.md`. No real Qwen GPU benchmark or matcher accuracy claim exists.
+- `exports/medcase24-atoms-partial-20260909.tar.gz` is an ignored, explicitly partial transfer snapshot, not the full study. Never publish it as completed evidence or silently grow its frozen matching node pool.
