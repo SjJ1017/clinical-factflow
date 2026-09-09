@@ -62,3 +62,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
   the primary metric. Read `docs/diagnosis-evaluation.md`.
 - Semantic system aggregation must be reference-blind. Never resolve a vote using
   gold labels or count individually correct agents as the system prediction.
+
+## Completed MedCase24 generation (2026-09-09)
+
+- All 120 fresh main-study traces are complete in `runs/medcase24-approved-20260909/`.
+  Check `status.json` and `audit.json` before running anything. Do not regenerate them.
+- Read `docs/medcase24-generation-20260909.md` for actual resources, retry accounting
+  and the separate pending three-label judging stage. No judged accuracy exists yet.
+- R1–R3 are reusable for a future explicit R4+ continuation, but no continuation
+  entry point exists yet. Do not edit original YAMLs or silently rewrite parent runs.

@@ -119,8 +119,9 @@ are local files under the ignored `data/medcasereasoning/pilot24/` directory. Th
 are not included in this Git repository. Rebuild them from the pinned official
 training Parquet using the instructions in the selection memo before validating or
 running the pilot configs. The partitions were reviewed by an assistant, not
-clinician-certified; clinical scoring remains ungraded. No pilot traces have been
-generated.
+clinician-certified. All 120 main-study traces are now complete; see the
+[generation report](docs/medcase24-generation-20260909.md). The separate
+LLM-assisted, level-aware correctness evaluation remains pending.
 
 ## Model and credential preference
 
@@ -153,3 +154,10 @@ set -a
 source .env
 set +a
 ```
+
+## MedCase24: generation completed
+
+[All 120 traces, integrity checks and actual resources](docs/medcase24-generation-20260909.md).
+All 1,080 diagnostic outputs are saved locally. LLM-assisted precise/level-correct/incorrect
+evaluation is a separate pending stage; literal majority is not the primary accuracy
+metric. The generation run has not executed extraction, atomization or matching.
