@@ -241,7 +241,7 @@ def test_remote_data_gate(cfg,tmp_path):
 
 def test_http_empty_retry_and_private_audit(cfg,tmp_path,monkeypatch):
     # Real client path, mocked transport; verifies an empty result is not cached.
-    monkeypatch.setenv("OPENCODE_API_KEY","test-key-must-not-be-written")
+    monkeypatch.setenv(cfg.extraction.model.api_key_env,"test-key-must-not-be-written")
     results=[{"facts":[]},{"facts":[synthetic_atom("Na 128 mmol/L.").model_dump()]}]
     class Response:
         def __init__(self,value):self.value=value

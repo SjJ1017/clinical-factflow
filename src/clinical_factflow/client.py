@@ -5,6 +5,8 @@ import json
 import os
 import time
 import urllib.request
+import urllib.error
+import urllib.parse
 import uuid
 
 from .config import digest
@@ -23,6 +25,7 @@ def json_object(text):
 class Client:
     def __init__(self, settings, audit_dir, allow_remote):
         self.settings, self.audit_dir = settings, audit_dir
+        self.session_namespace = uuid.uuid4().hex
         if settings.remote() and not allow_remote:
             raise ValueError("Dataset disallows remote processing; configure a local endpoint or obtain permission first")
 
@@ -36,17 +39,25 @@ class Client:
         if s.seed is not None:
             # Deterministic, distinct agent/case/turn streams; paired across topology conditions.
             payload["seed"] = int(digest([s.seed, sample_id])[:8], 16)
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "User-Agent": "clinical-factflow/0.1"}
         if s.api_key_env:
             key = os.environ.get(s.api_key_env)
             if not key:
                 raise ValueError(f"Missing environment variable {s.api_key_env}")
             headers["Authorization"] = "Bearer " + key
+        # Provider routing session: stable per agent conversation and retries.
+        # This is our own client/session identity, not an impersonated coding client.
+        conversation = sample_id.split("/round:")[0].split("/atomize/")[0]
+        if conversation.endswith("/extract"):
+            conversation = conversation[:-8]
+        session_id = "clinical-factflow-" + digest([self.session_namespace, conversation])[:32]
+        if urllib.parse.urlparse(s.base_url).hostname == "opencode.ai":
+            headers["x-opencode-session"] = session_id
         last = None
         for attempt in range(1, s.attempts + 1):
             call_id = uuid.uuid4().hex
             log = {"call_id": call_id, "sample_id": sample_id, "attempt": attempt,
-                   "endpoint": s.base_url, "request": payload}
+                   "endpoint": s.base_url, "session_id": session_id, "request": payload}
             start = time.perf_counter()
             try:
                 request = urllib.request.Request(s.base_url.rstrip("/") + "/chat/completions",
@@ -69,6 +80,8 @@ class Client:
                 last = exc
                 # Avoid provider exception bodies that could echo credentials or sensitive requests.
                 log.update(status="failed", error_type=type(exc).__name__)
+                if isinstance(exc, urllib.error.HTTPError):
+                    log["http_status"] = exc.code
             finally:
                 log["wall_seconds"] = time.perf_counter() - start
                 atomic_json(self.audit_dir / f"{call_id}.json", log)

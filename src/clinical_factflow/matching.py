@@ -1,9 +1,13 @@
-"""Two directional Qwen entailment scores; local inference only."""
+"""Directional entailment: local Qwen margins or explicit hosted categorical decisions."""
 from __future__ import annotations
 
 import json
 import math
 import re
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import StrictBool
+from .client import Client
+from .models import Strict
 from pathlib import Path
 
 import numpy as np
@@ -135,6 +139,48 @@ class LocalQwen:
         return list(zip(self.margins(pairs), self.margins([(b,a) for a,b in pairs])))
 
 
+class PairDecision(Strict):
+    pair_id: str
+    a_entails_b: StrictBool
+    b_entails_a: StrictBool
+    reason: str
+
+
+class PairDecisions(Strict):
+    pairs: list[PairDecision]
+
+
+class HostedJudge:
+    def __init__(self, cfg, audit_dir, allow_remote, client_factory=Client):
+        self.cfg = cfg
+        self.client = client_factory(cfg.hosted_model, audit_dir, allow_remote)
+        self.metadata = {"model": cfg.hosted_model.model, "method": "categorical_bidirectional",
+                         "local_margin_threshold_applied": False, "calls": []}
+
+    def score(self, pairs):
+        batches = [(i, pairs[i:i+self.cfg.batch_size]) for i in range(0,len(pairs),self.cfg.batch_size)]
+        def one(batch):
+            start, items = batch
+            payload = [{"pair_id": str(start+j), "a": a, "b": b} for j,(a,b) in enumerate(items)]
+            expected = {p["pair_id"] for p in payload}
+            def validate(result):
+                got = [p.pair_id for p in result.pairs]
+                if len(got) != len(set(got)) or set(got) != expected:
+                    raise ValueError("Hosted NLI must return every pair_id exactly once")
+            result, info = self.client.request([
+                {"role":"system", "content":self.cfg.system_prompt},
+                {"role":"user", "content":json.dumps({"pairs":payload},ensure_ascii=False)}],
+                PairDecisions, f"nli/batch/{start}", validate=validate)
+            by_id = {p.pair_id:p for p in result.pairs}
+            return [(by_id[p["pair_id"]].a_entails_b,by_id[p["pair_id"]].b_entails_a) for p in payload],info
+        scores = []
+        with ThreadPoolExecutor(max_workers=self.cfg.max_parallel) as pool:
+            for values, info in pool.map(one,batches):
+                scores.extend(values)
+                self.metadata["calls"].append(info)
+        return scores
+
+
 def match_mentions(mentions, cfg, encode, score):
     # Never compare different patients. Repeat text is one node with all mentions retained.
     texts = sorted({m["text"] for m in mentions})
@@ -153,10 +199,14 @@ def match_mentions(mentions, cfg, encode, score):
         raise ValueError("Matcher omitted candidate scores")
     relations, labels = [], {}
     for (a,b,s), (ab,ba) in zip(pairs,scores):
-        kind = relation(ab,ba,cfg.entailment_threshold)
+        hosted = cfg.backend == "hosted"
+        if hosted and (type(ab) is not bool or type(ba) is not bool):
+            raise ValueError("Hosted NLI requires categorical booleans, not local margins")
+        kind = relation(ab,ba,0.5 if hosted else cfg.entailment_threshold)
         labels[a,b] = kind
-        relations.append({"a": a, "b": b, "blocking_score": s, "ab_margin": ab,
-                          "ba_margin": ba, "relation": kind, "decision_stage": "nli"})
+        decision = {"a_entails_b":ab,"b_entails_a":ba} if hosted else {"ab_margin":ab,"ba_margin":ba}
+        relations.append({"a": a, "b": b, "blocking_score": s, **decision,
+                          "relation": kind, "decision_stage": "nli"})
     groups = complete_link_groups(len(texts), labels)
     text_to_fact, facts = {}, []
     for g in groups:
@@ -201,7 +251,7 @@ def match(cfg, run_dir):
             if any(len(blocker.tokenizer.encode(t)) > blocker.max_seq_length for t in texts):
                 raise ValueError("Atomic text exceeds blocker context; do not silently truncate")
             return blocker.encode(texts, normalize_embeddings=True, show_progress_bar=False)
-        model = LocalQwen(s)
+        model = HostedJudge(s, out / "calls" / "matching", cfg.dataset.allow_remote_processing) if s.backend == "hosted" else LocalQwen(s)
         status["blocker_resolved_revision"] = getattr(blocker[0].auto_model.config,"_commit_hash",None)
         for cid, mentions in sorted(by_case.items()):
             result = match_mentions(mentions,s,encode,model.score)

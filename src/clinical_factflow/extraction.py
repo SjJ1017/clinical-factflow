@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .client import Client
@@ -106,12 +107,16 @@ def extract(cfg, run_dir, client_factory=Client):
     index = {"status": "running", "records": [], "config_hash": manifest["config_hash"]}
     atomic_json(target / "index.json", index)
     try:
-        for record in records_for(cfg, cases, trace):
+        records = list(records_for(cfg, cases, trace))
+        def one(record):
             result = extract_record(client, cfg.extraction, record)
             name = digest(record["id"])[:24] + ".json"
             atomic_json(target / name, result)
-            index["records"].append({"id": record["id"], "file": name, "hash": file_hash(target / name)})
-            atomic_json(target / "index.json", index)
+            return {"id": record["id"], "file": name, "hash": file_hash(target / name)}
+        with ThreadPoolExecutor(max_workers=cfg.extraction.max_parallel) as pool:
+            for record in pool.map(one, records):
+                index["records"].append(record)
+                atomic_json(target / "index.json", index)
         index["status"] = "complete"
     except Exception as exc:
         index.update(status="failed", error_type=type(exc).__name__)

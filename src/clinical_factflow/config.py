@@ -92,6 +92,7 @@ class Outcome(Strict):
 
 
 class Extraction(Strict):
+    max_parallel: int = Field(default=1, gt=0)
     model: Model
     system_prompt: str
     atomize_prompt: str
@@ -101,6 +102,18 @@ class Extraction(Strict):
 
 
 class Matching(Strict):
+    backend: Literal["local_qwen", "hosted"] = "local_qwen"
+    hosted_model: Model | None = None
+    max_parallel: int = Field(default=3, gt=0)
+
+    @model_validator(mode="after")
+    def backend_settings(self):
+        if (self.backend == "hosted") != (self.hosted_model is not None):
+            raise ValueError("hosted backend requires hosted_model; local_qwen forbids unused hosted_model")
+        if self.hosted_model and self.hosted_model.model != self.model:
+            raise ValueError("matching.model must match hosted_model.model")
+        return self
+
     model: str = "Qwen/Qwen3-14B"
     revision: str = "main"
     dtype: Literal["bfloat16", "float16", "float32"] = "bfloat16"

@@ -1,4 +1,4 @@
-# Complete, frozen configuration: one case, one condition, one replicate.
+# Complete run configuration. Prefer OpenCode API 2; no automatic credential fallback.
 schema_version: 1
 name: mcr24-pmc2194704-split-generic
 replicate: 0
@@ -58,15 +58,19 @@ task_prompt: You are participating in a clinical case conference for research. U
   Produce a concise evidence-based assessment and one principal answer. Do not invent missing measurements. Return
   assessment and answer as JSON fields.
 generation:
-  model: glm-5.3-flash
+  model: deepseek-v4-flash
   base_url: https://opencode.ai/zen/go/v1
-  api_key_env: OPENCODE_API_KEY
+  api_key_env: OPENCODE_API_KEY_2
   temperature: 0.7
   max_tokens: 1600
   timeout_seconds: 120
   attempts: 3
   seed: null
-  extra_body: {}
+  extra_body:
+    thinking:
+      type: disabled
+    response_format:
+      type: json_object
 outcome:
   method: majority
   agent: null
@@ -75,7 +79,7 @@ extraction:
   model:
     model: minimax-m2.5
     base_url: https://opencode.ai/zen/go/v1
-    api_key_env: OPENCODE_API_KEY
+    api_key_env: OPENCODE_API_KEY_2
     temperature: 0.0
     max_tokens: 8000
     timeout_seconds: 120
@@ -173,6 +177,7 @@ extraction:
     and keep all quotes even when spans overlap.'
   atomize_batch_size: 20
   atomize: all
+  max_parallel: 1
 matching:
   model: Qwen/Qwen3-14B
   revision: main
@@ -211,3 +216,6 @@ matching:
 
     B: {b}'
   cluster_policy: complete_link
+  backend: local_qwen
+  hosted_model: null
+  max_parallel: 3

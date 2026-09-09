@@ -53,7 +53,7 @@ Export credentials explicitly in your shell. `.env.example` contains names only;
 .venv/bin/clinical-factflow match configs/demo-full.yaml --run-dir runs/RUN_DIR
 ```
 
-`pipeline CONFIG --out runs` runs all three stages. Defaults are generation `glm-5.3-flash` and extraction/atomization `minimax-m2.5`, using **OpenCode Go** (`/zen/go/v1`), with no automatic fallback to a metered endpoint. Local chat-compatible endpoints can replace either stage in the YAML. Restricted cases and their derived text must not be sent remotely merely because an API key exists: `dataset.allow_remote_processing: false` blocks both hosted generation and extraction.
+`pipeline CONFIG --out runs` runs all three stages. Defaults are generation `deepseek-v4-flash` and extraction/atomization `minimax-m2.5`, using **OpenCode Go** (`/zen/go/v1`), with no automatic fallback to a metered endpoint. Local chat-compatible endpoints can replace either stage in the YAML. Restricted cases and their derived text must not be sent remotely merely because an API key exists: `dataset.allow_remote_processing: false` blocks both hosted generation and extraction.
 
 Every `run` creates a distinct directory, including when identical YAML is repeated. There is no generation response cache, so identical generalist prompts still cause independent calls. Provider seed support is not guaranteed; when a seed is configured, per-case/agent/round/replicate seeds differ and are recorded in requests. Replicates remain necessary.
 
@@ -121,3 +121,15 @@ training Parquet using the instructions in the selection memo before validating 
 running the pilot configs. The partitions were reviewed by an assistant, not
 clinician-certified; clinical scoring remains ungraded. No pilot traces have been
 generated.
+
+## Model and credential preference
+
+The current defaults are DeepSeek V4 Flash for agent reasoning, MiniMax M2.5 for
+extraction/atomization, and local Qwen3-14B for matching. Non-historical YAMLs name
+`OPENCODE_API_KEY_2` explicitly. Missing API 2 does not trigger fallback to API 1.
+The 2026-09-09 smoke YAMLs record the actual earlier API 1 / DeepSeek validation
+settings and are retained unchanged. See [smoke findings](docs/deepseek-smoke-20260909.md).
+
+OpenCode Go requires the client's own user agent and a stable conversation session
+header; the client now provides both and preserves separate agent conversations.
+[Provider requirements](https://opencode.ai/docs/go/#where-can-i-use-it).
