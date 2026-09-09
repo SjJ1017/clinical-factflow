@@ -111,3 +111,53 @@ pass**. These prove the transport boundary, not model extraction quality.
 
 The 120 completed diagnosis traces and the completed MiniMax pilot remain frozen.
 No new API calls, full extraction, matching or outcome judging were performed.
+
+
+## Offline token split and old-pipeline comparison
+
+The provider still exposes no thinking/formal usage split. A subsequent offline
+count used the official [MiniMax M2.5 tokenizer](https://huggingface.co/MiniMaxAI/MiniMax-M2.5/tree/f710177d938eff80b684d42c5aa84b382612f21f),
+revision `f710177d938eff80b684d42c5aa84b382612f21f`. Only tokenizer data files
+were downloaded, with no model weights or remote-code execution. Each saved
+thinking/text block was encoded separately with special tokens disabled.
+
+| Calls included | Thinking tokens (offline) | Formal JSON tokens (offline) | Thinking share |
+|---|---:|---:|---:|
+| All 23 attempts | 27,776 | 23,339 | 54.3% |
+| Initial extraction, 11 attempts | 15,608 | 8,734 | 64.1% |
+| Atomization, 12 attempts | 12,168 | 14,605 | 45.4% |
+| Successful attempts only, 22 | 20,011 | 23,108 | 46.4% |
+| Failed truncation, 1 | 7,765 | 231 | 97.1% |
+
+The offline sum is 51,115 versus 51,207 billed output tokens, a difference of
+92 (0.18%): exactly four tokens per call. The difference plausibly reflects
+framing/control tokens, but its precise attribution is unverified. These are
+tokenizer-based estimates, not invented provider usage fields. Official tokenizer
+files, hashes and every per-call count are archived in the private study's
+`tokenizer-audit/` directory. No new generation/extraction calls were made.
+
+Inspection of the original project's `experiments/retrace.py` and
+`src/factflow/atomize.py` found several material execution differences:
+
+- The old retrace entry point defaults to six concurrent calls, versus one in
+  the clinical pilot. Old slots and atomization batches use bounded parallel maps.
+- Old atomization regex-prefilters candidates by default and batches their fact
+  sentences across a run; the clinical pipeline reviews every parent and batches
+  within each record. The old prefilter has documented missed-splitting defects,
+  so its speed cannot be adopted as evidence that its quality is adequate.
+- Old atomization emits only an ID and a list of strings; the clinical pipeline
+  emits complete annotated atoms and quotes again. With the *same* saved child
+  sentences and identical compact JSON formatting, full objects require 11,999
+  tokenizer tokens versus 3,105 for an ID/string-only representation (3.86×).
+  This is a serialization comparison, not an observed speedup: deleting those
+  fields would change the task, and no schema fields were deleted.
+
+Thus the serial 35–45-hour budget extrapolation is not an appropriate optimized
+execution plan, and excessive thinking alone does not explain the discrepancy
+with the user's previous roughly one-hour workflow. Removing all thinking would
+reduce observed generated-token volume by about 54%, not by tens of times.
+Concurrency, per-record overhead, atomization scope and repeated serialization
+also matter. The historical one-hour workload and exact launch arguments have
+not been identified, so an equal-workload runtime ratio or a new one-hour promise
+would be unsupported. Retain the atom structure while testing bounded concurrency
+and reducing redundant second-pass output before setting a full-run schedule.

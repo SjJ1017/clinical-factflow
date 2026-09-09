@@ -110,3 +110,19 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
   `thinking: disabled` solves cost. No new model or hard reasoning budget is set.
 - Output-only v2 is implemented and offline-tested, not yet live-validated.
   Preserve old pilot config and traces as v1 evidence; no paid calls this follow-up.
+
+
+## Token-ratio correction and throughput comparison
+
+- API reasoning usage is absent, but the official M2.5 tokenizer now provides an
+  offline estimate: thinking 27,776 vs formal 23,339 (54.3%/45.7%); successful
+  attempts alone are 46.4% thinking. Sum differs from API by four tokens per call.
+  See `docs/minimax-context-and-thinking-20260909.md`, private `tokenizer-audit/`.
+- Do not equate 51,207 total output tokens with reasoning or repeat that no token
+  split can be estimated at all. Distinguish offline tokenizer counts from billing.
+- Old retrace defaults to concurrency 6, candidate-only atomization, compact
+  ID/string replies and run-level batches; the new pilot was serial, all-parent,
+  per-record, full annotated replies. Thinking is only part of the throughput gap.
+- User rejects a tens-of-hours execution plan and recalls about one hour before.
+  Audit/optimize these differences before a new full-run schedule. The exact old
+  one-hour workload is unverified; do not promise matching runtime without a pilot.
