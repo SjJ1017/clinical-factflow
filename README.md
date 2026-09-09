@@ -53,7 +53,7 @@ Export credentials explicitly in your shell. `.env.example` contains names only;
 .venv/bin/clinical-factflow match configs/demo-full.yaml --run-dir runs/RUN_DIR
 ```
 
-`pipeline CONFIG --out runs` runs all three stages. Defaults are generation `deepseek-v4-flash` and extraction/atomization `minimax-m2.5`, using **OpenCode Go** (`/zen/go/v1`), with no automatic fallback to a metered endpoint. Local chat-compatible endpoints can replace either stage in the YAML. Restricted cases and their derived text must not be sent remotely merely because an API key exists: `dataset.allow_remote_processing: false` blocks both hosted generation and extraction.
+`pipeline CONFIG --out runs` runs all three stages. Defaults are generation `deepseek-v4-flash` and extraction/atomization `minimax-m3` with thinking disabled, using **OpenCode Go** (`/zen/go/v1`), with no automatic fallback to a metered endpoint. Local chat-compatible endpoints can replace either stage in the YAML. Restricted cases and their derived text must not be sent remotely merely because an API key exists: `dataset.allow_remote_processing: false` blocks both hosted generation and extraction.
 
 Every `run` creates a distinct directory, including when identical YAML is repeated. There is no generation response cache, so identical generalist prompts still cause independent calls. Provider seed support is not guaranteed; when a seed is configured, per-case/agent/round/replicate seeds differ and are recorded in requests. Replicates remain necessary.
 
@@ -125,8 +125,8 @@ LLM-assisted, level-aware correctness evaluation remains pending.
 
 ## Model and credential preference
 
-The current defaults are DeepSeek V4 Flash for agent reasoning, MiniMax M2.5 for
-extraction/atomization, and local Qwen3-14B for matching. Non-historical YAMLs name
+The current defaults are DeepSeek V4 Flash for agent reasoning, MiniMax M3 with
+thinking disabled for extraction/atomization, and local Qwen3-14B for matching. Non-historical YAMLs name
 `OPENCODE_API_KEY_2` explicitly. Missing API 2 does not trigger fallback to API 1.
 The 2026-09-09 smoke YAMLs record the actual earlier API 1 / DeepSeek validation
 settings and are retained unchanged. See [smoke findings](docs/deepseek-smoke-20260909.md).
@@ -174,5 +174,9 @@ The boundary is now enforced in code; v2 has offline coverage and awaits a fresh
 
 The [candidate-only extraction speed audit](docs/minimax-candidate-speed-20260909.md)
 records the output-only ten-text retest and separate two-text M3 comparison. Reusable
-presets now screen parents before atomization and use six extraction workers. M2.5
-remains the default; stage selection metadata does not change the atom schema.
+presets now screen parents before atomization and use six extraction workers. That historical pilot used M2.5; stage selection metadata does not change the atom schema.
+
+The user's subsequent [M3 accuracy check](docs/minimax-m3-accuracy-20260909.md)
+selects M3 with thinking disabled for future extraction. All ten sample texts are
+reviewed against their originals; 100% quote location does not imply perfect
+fidelity or domain labels. Historical runs and measurement configs remain frozen.

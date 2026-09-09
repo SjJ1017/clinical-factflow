@@ -136,3 +136,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Default reusable presets: `atomize: candidates_v1`, six workers. Unselected parents retain all fields. Selection reasons are stage metadata. Do not add atom attributes.
 - M3 speed pilot: only S03/S04, thinking explicitly disabled, 20.56 s concurrent wall, four successful calls, 61/61 located. Joint-condition splitting and duplicate evidence remain; M2.5 stays the default. Do not claim clinical quality validation.
 - Reuse-aware M2.5 full extraction projects 6.1–6.8 ideal hours at six workers; current naive per-run calls duplicate sources/metadata (7.74 h per-record projection). Cross-run reuse still needs implementation. No full extraction/matching/judging was launched.
+
+
+## M3 chosen and ten-text accuracy review (2026-09-09)
+
+- User chose M3 with thinking disabled. Future reusable root configs now use `minimax-m3` with `extra_body.thinking.type: disabled` for extraction/atomization, API 2, candidate-only, six workers. This supersedes the earlier M2.5 default. DeepSeek generation and frozen runs are unchanged.
+- All ten original sample texts have M3 results: reuse S03/S04 from the speed pilot, eight new results in `runs/minimax-m3-accuracy-completion-20260909/`. Do not redo them. Full private review is `runs/minimax-m3-accuracy-review-20260909/`; public summary `docs/minimax-m3-accuracy-20260909.md`.
+- 194 mentions, 194 located; strict fidelity pass 174 (10 clear errors, 10 review), domain-set pass 163 (24 clear errors, 7 review). This is unblinded Codex review, not clinician gold, clinical diagnosis accuracy or recall. Duplicate/granularity differences affect denominators.
+- 18/18 calls successful, zero returned thinking blocks, $0.03616 known allowance. New eight ran in 21.26 s; earlier two in 20.56 s. Do not claim a simultaneous ten-text benchmark. Reuse-aware six-worker full extrapolation 1.14–1.24 h, planning 1.5–2 h, plus matching/judging.
+- Joint-condition errors, missing shared durations, duplicate expansions and domain omissions persist. No new atom attributes or prompt fixes were introduced. No full extraction/matching/judging was launched by this accuracy check.

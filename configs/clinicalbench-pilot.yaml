@@ -79,7 +79,7 @@ outcome:
 extraction:
   max_parallel: 6
   model:
-    model: minimax-m2.5
+    model: minimax-m3
     base_url: https://opencode.ai/zen/go/v1
     api_key_env: OPENCODE_API_KEY_2
     temperature: 0.0
@@ -87,7 +87,9 @@ extraction:
     timeout_seconds: 120.0
     attempts: 3
     seed: null
-    extra_body: {}
+    extra_body:
+      thinking:
+        type: disabled
     api_format: anthropic
   system_prompt: 'Extract every proposition expressed in text, including clinical observations, explicit inferences
     and recommendations. A proposition need not be true. Never add your own clinical inference. Return no truths
