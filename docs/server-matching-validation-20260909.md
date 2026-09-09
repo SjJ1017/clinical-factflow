@@ -6,7 +6,7 @@ The portable server path is implemented and tested. **Real Qwen3-14B GPU inferen
 
 | Check | Result |
 |---|---|
-| Full offline suite in the development environment | 79 passed |
+| Full offline suite before GPU-launcher additions | 80 passed |
 | Fresh Git clone, independent Python 3.12.14, installed package | 78 passed, 1 skipped (PyTorch-dependent adapter test; PyTorch absent in this minimal environment) |
 | Fresh-clone smoke with API-key environment variables removed | Completed; imports resolve to the new environment's installed package |
 | Synthetic atoms + random embeddings + random logits | 2 cases, 48 nodes, 552/552 pair rows; 120 pairs initially sent to the mock scorer |
@@ -27,20 +27,31 @@ Local artifacts are ignored by Git:
 - `runs/pair-one-case-release-20260909/`
 - The independent clone and Python 3.12 environment were under `/tmp/`; they are verification workspaces, not dependencies.
 
-## Production extraction continuation
+## Completed production extraction and workload
 
-The previous 616-record queue was resumed using M3, thinking disabled, six workers and API 2. **541 additional records completed**, bringing the total to **1,157 / 1,487**, with **330 remaining**.
+All **1,487 / 1,487** records and **120 / 120** trace extractions are complete: 1,080 outputs, 383 unique sources and 24 shared metadata records. All result/task/record hashes and the six frozen extraction source hashes verified; the queue lock is free.
 
-- Completed: 755 output records, 378 unique source records, 24 shared-metadata records.
-- 27,296 atomic mentions; 390 have no exact located quote. This is a location audit, not a semantic accuracy estimate.
-- All records and the six frozen extraction source hashes verified; the queue lock is free.
-- 67 / 120 traces have every required extraction record completed.
-- Known cumulative Go allowance from returned usage is about $4.700, including the earlier session. This is not a cash invoice; requests without returned usage are separate in the audit.
+There are 38,229 atomic mentions, of which 37,720 have located quotations (98.67%). Location is not semantic accuracy or recall. Eight failed stages used audited schema-only retries with distinct request keys; successful stages were reused. No atom attributes were added, no facts were hand-edited, and no returned thinking blocks were observed.
 
-The provider returned HTTP 429 with `GoUsageLimitError`, `limitName: weekly`, and an approximately four-day reset. The queue stopped after consecutive failures. A single diagnostic retry confirmed the weekly limit. No paid-balance fallback was enabled. Successful initial-extraction and atomization checkpoints remain reusable.
+The user authorized API 2 Go balance after the subscription quota pause. The remaining extraction completed with **$1.88299488 in provider-reported balance charges**, summed from `response.cost`, including charged validation failures. This is separate from historical subscription allowance. The earlier quota and timed-session summaries remain preserved; the final private audit is `runs/medcase24-m3-extraction-20260909/sessions/2026-09-09-final-summary.json`.
 
-A separate, tested `scripts/recover_extraction_schema.py` prepares schema-only retries for failed stages, with different request keys and explicit audit metadata. It has **not been executed on production records**, because API 2's quota is exhausted. It neither changes the atom schema nor hand-maps invalid values.
+The complete archive is `exports/medcase24-atoms.tar.gz` (about 6.8 MiB), transferred separately by SCP. Its manifest hash is `96ab2cff041d161e2c1c6b0371a532f7298c12472608e97d9c0ea7f0af952ee3`. It contains 24 cases, 30,945 distinct nodes and **20,196,086 possible same-case pairs**, preserving all occurrence bindings. The earlier partial archive is diagnostic history only.
 
-The current transfer snapshot is `exports/medcase24-atoms-partial-20260909.tar.gz` (4.85 MiB): 24 cases, 22,587 distinct nodes, 11,929,499 possible same-case pairs. It is explicitly incomplete. The main server wrapper refuses to publish a complete-study export from it. For interface diagnostics, the lower-level `run --allow-partial` command is available; a completed extraction must produce a new complete bundle and matching output because the ranking pool changes when nodes are added.
+The complete real-BGE workload profile (`runs/blocker-workload-full-20260909/`) saved every pair's similarity, lexical components and endpoint ranks:
 
-The current user decision is whether to use API 1's Go allowance or retain the checkpoint until API 2 resets. The full extraction has not been reported as complete.
+| Blocker threshold | Top-K | Unique candidate pairs | GPU hours at 7.25 bidirectional pairs/s |
+|---|---|---|---|
+| **0.62** | **12** | **256,811** | **9.84** |
+| 0.70 | 12 | 253,187 | 9.70 |
+| 0.62 | 8 | 172,606 | 6.61 |
+| 0.62 | 20 | 423,549 | 16.23 |
+
+Keep the approved defaults, 0.62/top12/batch16/NLI margin5.28. Top-K controls most of the workload; increasing the threshold to 0.70 saves little. The estimate covers model work, excluding initialization, geometry and file export; it is not a new GPU benchmark. Of the default shared-case candidates, 148,660 never co-occur within one trace. Per-trace candidate counts average 1,030.36 and overlap; the shared-case total above is the actual execution pool.
+
+## Chewie preparation; GPU run deliberately not started
+
+The server repository and complete atom archive are installed. The existing `/scratch/users/jiajun/venv-matcher` and cached Qwen/BGE weights are reused; no old project code is required at runtime. A CPU random-interface smoke passed on Chewie (552/552 pairs, completed resume adds zero judgments). The startup guard has offline tests for physical index/UUID selection, busy processes, high utilization, insufficient memory and unavailable telemetry.
+
+User requested stopping after available CPU tests and waiting for a later instruction. **No GPU matching process or automatic idle-GPU waiter was started.** Physical GPU 3 is an 11 GiB RTX 2080 Ti and cannot hold default BF16 Qwen14B. Other GPUs were occupied, including GPU 1 despite its large remaining memory.
+
+`scripts/run_server_matching.sh` starts a detached tmux session only for an explicitly selected idle, sufficiently large GPU. It resolves the physical index to its UUID, sets both `CUDA_DEVICE_ORDER=PCI_BUS_ID` and UUID-valued `CUDA_VISIBLE_DEVICES`, rechecks inside tmux and verifies PyTorch's device UUID/kernel before model loading. It never falls back to another GPU. The real CUDA verification remains deferred until an eligible card is available.

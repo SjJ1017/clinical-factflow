@@ -142,3 +142,40 @@ python scripts/smoke_matching.py \
 Both use deterministic seeded random logits in the exact detailed-score contract used by Qwen. Synthetic outputs carry `test_data: true`. Each covers two synthetic cases, 48 nodes and 552 pairs, including interrupted/resumed batches, zero-call completed resume, threshold expansion, boundary review and full JSONL export. These labels are not semantic accuracy measurements.
 
 The new server entry point supersedes the old per-run `match` command for this study's all-pair ledger. The legacy command remains available for historical smoke runs; it does not produce this ledger format.
+
+## Measure the matching workload before GPU execution
+
+The approved plan keeps `blocker_threshold: 0.62` and `top_k: 12`, with one GPU process. Use 7.25 complete bidirectional pairs per second for planning; do not divide the estimate by two again. The actual GPU throughput still depends on the destination hardware.
+
+```bash
+python scripts/profile_blocker.py \
+  --bundle exports/medcase24-atoms \
+  --out outputs/blocker-workload \
+  --config outputs/matching-resolved.yaml \
+  --pairs-per-second 7.25
+```
+
+This uses the production BGE/lexical geometry and makes no NLI calls. It retains every pair's scores, lexical components and endpoint ranks in compressed arrays, with embeddings, node identities and input/code/model hashes. Repeating the same profile reuses verified geometry. Changed input, encoder or geometry code requires a new output directory. The final summary compares threshold and top-K choices and reports unique shared-case candidates, the subset that occurs together within individual traces, and projected GPU hours. The shared-case total is the execution workload; per-trace counts can overlap and must not be substituted for it.
+
+The profile cache is an offline planning artifact. Production matching writes its own complete SQLite annotation ledger; transfer the atoms archive and preserve the production ledgers for threshold changes and second judgments.
+
+## Prepared Chewie launcher
+
+After the prepared server's physical GPU 4 is fully idle:
+
+```bash
+cd ~/clinical-factflow && GPU=4 ./scripts/run_server_matching.sh
+```
+
+Set `GPU` to the available physical index from `nvidia-smi`. GPU 3 is too small. The launcher refuses cards with an existing compute process, nonzero utilization, more than 256 MiB already used or less than 38,000 MiB total memory. It does not wait or pick a different card. It resolves the UUID before tmux creation and verifies the binding again inside tmux. The actual CUDA kernel/UUID check is performed only at that future launch.
+
+The prepared resolved configuration is `outputs/matching-chewie.yaml`; it uses the existing cached model snapshots. The default interpreter is `/scratch/users/jiajun/venv-matcher/bin/python`; project imports come from this checkout. Output and the append-only launcher log are under `/scratch/users/jiajun/clinical-factflow/medcase24-pairs`. Cache and temporary paths follow the original `fact-agent/experiments/matcher_eval/run.sh` layout. Existing environments, jobs and tmux sessions are left untouched.
+
+Attach with `tmux attach -t clinical-matching`. A successful or failed run leaves its log and matching checkpoints on disk; repeat the launch command to resume once its tmux session has ended. An existing same-name session is never replaced. `MATCH_SESSION`, `MATCH_OUT`, `MATCH_CONFIG`, `MATCH_BUNDLE` and `PYTHON` can explicitly override paths or session name.
+
+
+## Parallel case shards
+
+`python scripts/split_matching_bundle.py --bundle exports/medcase24-atoms --profile outputs/blocker-workload-full.json --out exports/medcase24-two-gpu --names gpu0 gpu4` partitions whole cases by measured default candidate counts. It validates the full manifest and every case hash, records a disjoint exhaustive assignment in `plan.json`, and copies original case files unchanged. Every case retains its complete original ranking pool. Parent extraction record counts remain explicitly marked as parent provenance in each shard.
+
+Launch separate tmux sessions/output directories with `GPU=0 MATCH_SESSION=clinical-match-gpu0 MATCH_BUNDLE=exports/medcase24-two-gpu/gpu0 MATCH_OUT=/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu0 ./scripts/run_server_matching.sh`, and the analogous GPU 4 settings. Both output sets and the split plan together form the study; completion of one shard is not completion of the full study. Repeating an individual launch resumes that shard without changing its frozen case inventory.

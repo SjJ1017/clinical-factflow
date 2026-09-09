@@ -182,3 +182,28 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Schema-retry code is offline-tested but has not been used on production records. API 1 continuation is awaiting the user's choice; do not claim that it has started.
 - The server code is validated by 79 offline tests, independent Git-clone/Python 3.12 installation, and a 299,925-pair actual-atom/real-BGE/random-logit export. See `docs/server-matching-validation-20260909.md`. No real Qwen GPU benchmark or matcher accuracy claim exists.
 - `exports/medcase24-atoms-partial-20260909.tar.gz` is an ignored, explicitly partial transfer snapshot, not the full study. Never publish it as completed evidence or silently grow its frozen matching node pool.
+
+
+## Balance-authorized continuation (supersedes the quota pause)
+
+- The user explicitly authorized API 2's available balance for the remaining extraction, estimated around $2, and enabled Use balance in the correct workspace. A successful original request verified the switch; no endpoint/model/configuration change is needed.
+- Latest active invocation: `scripts/recover_extraction_schema.py` with the original study/config/output, six workers and a 40-minute session. Check current status/lock; do not start a duplicate. `response.cost` now reports actual balance charges, which should be summed separately from historical subscription allowance.
+- All source and metadata extraction records have now completed; remaining work is output extraction/atomization. The schema retry policy is now in use on previously failed stages only. Keep its request-key and per-task audit metadata.
+- User supplied local NLI throughput: use 7.25 complete bidirectional pairs/s for planning. `scripts/profile_blocker.py` stores all real BGE/lexical scores/ranks and threshold count profiles. The completed partial profile is in `runs/blocker-workload-20260909/`; rerun on a NEW full bundle/output after extraction completes.
+- Current partial bundle (1,157 records): 185,605 default candidate pairs at 0.62/top12, about 7.11 GPU hours. Raising threshold to 0.70 only reduces this to 181,864. This is not the final full-study estimate.
+
+
+## Extraction complete; server prepared, GPU explicitly deferred
+
+- Latest user instruction: finish currently possible CPU tests, STOP, wait until they report a free GPU. Do not start GPU inference or an automatic idle-GPU waiter. GPU 3 is an 11 GB RTX 2080 Ti; large free memory on busy GPU 1 does not authorize sharing it.
+- Extraction now 1,487/1,487 and all 120 trace extractions complete. Actual API2 balance charge $1.88299488. Final hash/lock/coverage audit: queue `sessions/2026-09-09-final-summary.json`. 38,229 mentions, 509 unlocated; location is not semantic accuracy. Eight stages used the audited schema retry. Earlier quota/first-session notes are historical.
+- Complete transfer archive `exports/medcase24-atoms.tar.gz`: 30,945 nodes, 20,196,086 possible pairs. Complete BGE profile `runs/blocker-workload-full-20260909/`: default 256,811 bidirectional candidate pairs = 9.84h at user-supplied 7.25/s. Preserve 0.62/top12/batch16/margin5.28, matching old run.sh defaults; no threshold tightening requested.
+- Chewie is reachable by ordinary `ssh chewie`, via existing SSH configuration; no Computer Use or Chrome permissions needed. New checkout `~/clinical-factflow`; real data transferred with SCP, not Git. Cache root `/scratch/users/jiajun`, existing interpreter `venv-matcher/bin/python`.
+- New launcher `GPU=4 ./scripts/run_server_matching.sh` uses detached tmux, checks physical GPU availability, resolves to UUID and verifies PyTorch mapping. It fails rather than using another card. Only run when user authorizes a later launch; no GPU process has been started in this preparation phase.
+
+
+## 2026-09-10: two-GPU launch authorized
+
+- User reports physical GPU 0 and 4 idle and explicitly requests splitting data and starting both. This supersedes the previous stop/wait instruction; syncing the prepared launcher is part of the authorized launch. Use these two GPUs only.
+- Split whole case inventories by saved default candidate counts, not facts inside a case; preserve the frozen node pool, defaults and both directional judgments. Separate tmux names and output ledgers per GPU. GPU UUID checks remain mandatory.
+- `scripts/split_matching_bundle.py` creates disjoint, complete case shards and `plan.json`; each shard retains the complete parent extraction's record provenance and explicitly marks its selected-case scope. Preserve both output directories and the plan for later whole-study analysis.

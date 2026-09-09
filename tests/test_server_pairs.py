@@ -484,3 +484,78 @@ def test_interrupted_geometry_is_archived_and_rebuilt(tmp_path):
     assert summary(db, "initial")["pair_universe"] == 28
     saved = list((tmp_path / "interrupted-builds").glob("*/x.building.sqlite"))
     assert len(saved) == 1 and saved[0].read_bytes() == b"partial scratch build"
+
+
+def test_blocker_profiler_saves_production_values_and_resumes_without_encoding(
+    tmp_path, monkeypatch
+):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "profile_blocker", ROOT / "scripts/profile_blocker.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    c = case()
+    f = bundle / "case.json"
+    atomic_json(f, c)
+    atomic_json(
+        bundle / "manifest.json",
+        dict(
+            version="atom-bundle-v1",
+            complete=True,
+            completed_records=1,
+            expected_records=1,
+            cases=[
+                dict(
+                    case_id=c["case_id"],
+                    file=f.name,
+                    sha256=file_hash(f),
+                    nodes=8,
+                    pairs=28,
+                )
+            ],
+        ),
+    )
+    out = tmp_path / "profile"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "profile",
+            "--bundle",
+            str(bundle),
+            "--out",
+            str(out),
+            "--config",
+            str(ROOT / "configs/matching/random-smoke.yaml"),
+        ],
+    )
+    module.main()
+    summary = json.loads((out / "summary.json").read_text())
+    assert summary["total_pairs"] == 28 and summary["per_trace_default_mean"] is None
+    arr = np.load(next(out.glob("*/pairs.npz")))["pairs"]
+    expected = list(
+        geometry(
+            c["nodes"],
+            RandomEncoder(1729, 24).encode([n["logic_text"] for n in c["nodes"]]),
+        )
+    )
+    for row, other in zip(arr, expected):
+        assert list(row) == list(other[1:])
+    count = int(
+        np.count_nonzero(
+            (arr["combined"] >= 0.62) & (np.minimum(arr["rank_a"], arr["rank_b"]) <= 12)
+        )
+    )
+    default = next(
+        p for p in summary["policies"] if p["threshold"] == 0.62 and p["top_k"] == 12
+    )
+    assert default["candidate_pairs"] == count
+    assert default["gpu_hours"] == pytest.approx(count / 7.25 / 3600)
+    monkeypatch.setattr(
+        module, "get_encoder", lambda *a: pytest.fail("Must reuse frozen saved scores")
+    )
+    module.main()
