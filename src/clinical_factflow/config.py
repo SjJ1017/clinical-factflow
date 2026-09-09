@@ -101,8 +101,8 @@ class Extraction(Strict):
     system_prompt: str
     atomize_prompt: str
     atomize_batch_size: int = Field(gt=0)
-    # All mentions receive the second pass; no lossy conjunction prefilter.
-    atomize: Literal["all"]
+    # Candidate selection is versioned; all remains available for audits.
+    atomize: Literal["all", "candidates_v1"]
 
 
 class Matching(Strict):

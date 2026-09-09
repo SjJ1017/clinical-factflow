@@ -1,6 +1,6 @@
 # Clinical occurrence annotations
 
-The vocabulary is an initial operational proposal, not a validated clinical ontology. Every extractor response is schema-validated; malformed or missing items fail the stage. The second atomization pass receives every parent, the original text only, and must return at least one part for each parent.
+The vocabulary is an initial operational proposal, not a validated clinical ontology. Every extractor response is schema-validated; malformed or missing items fail the stage. The default second atomization pass receives only screened candidate parents and the original text. It must return at least one part for each selected parent, exactly once; unselected parents pass through unchanged. `atomize: all` remains available for explicit historical comparisons.
 
 | Axis | Values | Operational question |
 |---|---|---|
@@ -48,3 +48,5 @@ when unresolved. Never supply the agent's input to reconstruct missing output
 content. Initial evidence and common metadata are separate extractable records;
 visible input fact sets reuse their facts and actually delivered output facts.
 See [context and thinking audit](minimax-context-and-thinking-20260909.md).
+
+Candidate screening and measured limitations are documented in [the candidate speed audit](minimax-candidate-speed-20260909.md). Selection reasons are stored once in stage metadata, not added to atom attributes.

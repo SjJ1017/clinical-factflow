@@ -126,3 +126,13 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - User rejects a tens-of-hours execution plan and recalls about one hour before.
   Audit/optimize these differences before a new full-run schedule. The exact old
   one-hour workload is unverified; do not promise matching runtime without a pilot.
+
+
+## Candidate-only speed retest (2026-09-09; supersedes historical all-parent advice)
+
+- User requested output-only input, screened-parent atomization and a ten-text six-worker retest. Completed; read `docs/minimax-candidate-speed-20260909.md` before more calls.
+- M2.5 v3: 10/10, 177.93 s batch wall, 40/128 parents reviewed, 165 mentions, 159 located. Returned thinking/formal tokens: 21,610/17,400; timeout usage unknown. Aggregate call work did not improve; do not attribute parallel speedup to prompts.
+- Known context-only imports disappeared in manual review; compounds, scope errors, duplicates and domain omissions remain. Location rate is not semantic accuracy or recall.
+- Default reusable presets: `atomize: candidates_v1`, six workers. Unselected parents retain all fields. Selection reasons are stage metadata. Do not add atom attributes.
+- M3 speed pilot: only S03/S04, thinking explicitly disabled, 20.56 s concurrent wall, four successful calls, 61/61 located. Joint-condition splitting and duplicate evidence remain; M2.5 stays the default. Do not claim clinical quality validation.
+- Reuse-aware M2.5 full extraction projects 6.1–6.8 ideal hours at six workers; current naive per-run calls duplicate sources/metadata (7.74 h per-record projection). Cross-run reuse still needs implementation. No full extraction/matching/judging was launched.

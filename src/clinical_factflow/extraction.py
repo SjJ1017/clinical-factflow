@@ -26,6 +26,23 @@ def spans(text, quote):
     return [[m.start(), m.end()] for m in re.finditer(re.escape(quote), text)]
 
 
+def atomization_reasons(atom, original_text):
+    """Broad, cheap review candidates. A hit does not imply a mandatory split."""
+    text = atom.text
+    reasons = []
+    if re.search(r"\b(and|or|but|as well as|along with|both|all|each|neither|either)\b|[,;:]", text, re.I):
+        reasons.append("coordination_or_list")
+    if re.search(r"\b(it|they|them|their|these|those)\b|\b(?:this|the) (?:pattern|findings|results|diagnosis|presentation|histology|combination)\b", text, re.I):
+        reasons.append("possible_unresolved_reference")
+    if re.search(r"\b(?:reports?|states?|argues?|suggests?|notes?|claims?) that\b|^(?:Agent|Panelist|Peer)\b", text, re.I):
+        reasons.append("attribution_wrapper")
+    if re.search(r"\b\d+[ -]year[ -]old\b.*\b(man|woman|boy|girl|male|female)\b", text, re.I):
+        reasons.append("bundled_demographics")
+    if atom.quote not in original_text:
+        reasons.append("unlocated_quote")
+    return reasons
+
+
 def extract_record(client, cfg, record):
     # Deliberately ignore legacy reference_context. Input profiles must reuse
     # extracted source/self/peer records instead of re-extracting input here.
@@ -36,7 +53,10 @@ def extract_record(client, cfg, record):
     parents = {f"p{i}": f for i,f in enumerate(result.facts)}
     atoms = []
     batch_size = cfg.atomize_batch_size
-    parent_ids = list(parents)
+    selection = {key: (["all"] if cfg.atomize == "all" else atomization_reasons(atom, record["text"]))
+                 for key, atom in parents.items()}
+    parent_ids = [key for key, reasons in selection.items() if reasons]
+    by_parent = {key: [atom] for key, atom in parents.items()}
     split_calls = []
     for start in range(0, len(parent_ids), batch_size):
         keys = parent_ids[start:start+batch_size]
@@ -47,10 +67,10 @@ def extract_record(client, cfg, record):
             SplitResult, record["id"] + f"/atomize/{start}", validate=lambda r: validate_splits(r, keys))
         split_calls.append(call)
         # Model ordering cannot silently change mention identity.
-        by_parent = {x.parent_id: x.parts for x in split.facts}
-        for key in keys:
-            for atom in by_parent[key]:
-                atoms.append((key, atom))
+        by_parent.update({x.parent_id: x.parts for x in split.facts})
+    for key in parents:
+        for atom in by_parent[key]:
+            atoms.append((key, atom))
     mentions, seen = [], {}
     for key, atom in atoms:
         # Kind/attribution are occurrence properties: never drop an inference
@@ -69,7 +89,9 @@ def extract_record(client, cfg, record):
         mentions.append(mention)
     return {"record_id": record["id"], "record_hash": digest(record),
             "parents": {k:v.model_dump() for k,v in parents.items()}, "mentions": mentions,
-            "extraction_call": info, "atomize_calls": split_calls}
+            "extraction_call": info, "atomize_calls": split_calls,
+            "atomization_selection": {"mode": cfg.atomize, "reasons": selection,
+                                      "selected": len(parent_ids), "total": len(parents)}}
 
 
 def records_for(cfg, cases, trace):

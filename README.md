@@ -170,3 +170,9 @@ further validation. The versioned pilot keeps the atom fields and makes domains 
 
 [Follow-up: output-only boundary and MiniMax thinking](docs/minimax-context-and-thinking-20260909.md).
 The boundary is now enforced in code; v2 has offline coverage and awaits a fresh live pilot.
+
+
+The [candidate-only extraction speed audit](docs/minimax-candidate-speed-20260909.md)
+records the output-only ten-text retest and separate two-text M3 comparison. Reusable
+presets now screen parents before atomization and use six extraction workers. M2.5
+remains the default; stage selection metadata does not change the atom schema.

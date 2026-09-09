@@ -8,7 +8,7 @@ No historical numerical conclusion is imported as a new result.
 | Recorded problem | New handling | What still needs empirical validation |
 |---|---|---|
 | fix #1: omitted noun phrases were not resolved | Resolve within the target text only; missing referents remain ambiguous. Full visible-input context was removed after the MiniMax audit found leakage | Human checks of extracted references; prompt wording is not a guarantee |
-| fix #2: inconsistent conjunction splitting and narrow prefilter | Second atomization pass processes **all** parents; worked split / no-split examples; exact parent coverage required | Clinical granularity and conjunction error rate |
+| fix #2: inconsistent conjunction splitting and narrow prefilter | User-requested candidate-only pass (2026-09-09): broader list/quantifier/reference/quote screening; worked split / no-split examples; exact selected-parent coverage. Original all-parent mode remains explicit | Clinical granularity, screening false negatives and conjunction error rate; see candidate speed audit |
 | fix #3: subset siblings inflate apparent novelty | Preserve scope, uncertainty, time, values, units; dedupe within a record without discarding occurrences | New-corpus subset audit, not subtraction of an old 9.6% bias estimate |
 | fix #4: matching threshold cannot fix bad atoms | Inherited cutoff explicitly labeled unvalidated for this domain; no threshold loosening | Independent domain-specific gold for both blocker and NLI |
 | fix #5: source rereading confounded with peer transmission | Source allocation and first/every-round visibility are explicit; actual source / peer / self IDs recorded per turn | A visible matching fact remains an opportunity, not proof of causal use |

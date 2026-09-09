@@ -70,7 +70,7 @@ outcome:
   agent: null
   scoring: ungraded
 extraction:
-  max_parallel: 1
+  max_parallel: 6
   model:
     model: minimax-m2.5
     base_url: https://opencode.ai/zen/go/v1
@@ -244,7 +244,7 @@ extraction:
     do not promote an unsupported parent qualifier into a new fact. If a referent is missing, retain the ambiguity.
     Keep analysis brief and return the JSON without repeated alternative drafts.'
   atomize_batch_size: 20
-  atomize: all
+  atomize: candidates_v1
 matching:
   model: Qwen/Qwen3-14B
   revision: main

@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def test_both_passes_ignore_legacy_visible_input_and_gold():
     cfg=load_config(ROOT/'configs/demo-full.yaml').extraction
+    cfg.atomize='all'
     seen=[]
     atom=Atom(text='Sodium is low.',quote='Sodium is low.',qualifiers=[],annotation=dict(kind='observation',attribution='direct',certainty='asserted',polarity='affirmed',clinical_domain=['laboratory']))
     class Capture:
