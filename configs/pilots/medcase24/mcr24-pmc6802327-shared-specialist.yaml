@@ -1,4 +1,4 @@
-# Complete run configuration. Prefer OpenCode API 2; no automatic credential fallback.
+# Complete, frozen configuration: one case, one condition, one replicate.
 schema_version: 1
 name: mcr24-pmc6802327-shared-specialist
 replicate: 0
@@ -19,19 +19,31 @@ agents:
   role: Clinical assessment specialist
   prompt: You are a physician specializing in clinical assessment. Focus on history, symptoms, bedside examination
     and temporal course; explain how these bear on the differential diagnosis and reconcile them with received evidence.
-  initial_context: ''
+  initial_context: 'Study patient: patient-bd790019
+
+    Age: 66 years
+
+    Sex as reported: male'
 - id: B
   role: Laboratory and pathology specialist
   prompt: You are a physician specializing in laboratory and pathology interpretation. Focus on specimen identity,
     measurements, tissue findings, thresholds and pertinent negatives; explain how these bear on the differential
     diagnosis and reconcile them with received evidence.
-  initial_context: ''
+  initial_context: 'Study patient: patient-bd790019
+
+    Age: 66 years
+
+    Sex as reported: male'
 - id: C
   role: Imaging specialist
   prompt: You are a physician specializing in imaging interpretation. Focus on anatomy, imaging patterns, distribution
     and temporal changes; explain how these bear on the differential diagnosis and reconcile them with received
     evidence.
-  initial_context: ''
+  initial_context: 'Study patient: patient-bd790019
+
+    Age: 66 years
+
+    Sex as reported: male'
 topology:
   kind: full
   schedule: synchronous
@@ -49,10 +61,23 @@ context:
   peer_memory: last
 rounds: 3
 max_parallel: 3
-task_prompt: You are participating in a clinical case conference for research. Use the evidence visible in your
-  current input. Distinguish observations from hypotheses, preserve uncertainty, and explain conflicts with peers.
-  Produce a concise evidence-based assessment and one principal answer. Do not invent missing measurements. Return
-  assessment and answer as JSON fields.
+task_prompt: 'You are participating in a collaborative clinical case conference for research. You and every peer
+  agent are diagnosing the same patient. All assigned source reports and all peer outputs concern this one patient;
+  different agents may hold different reports. Missing details in your own partition do not mean that a peer is
+  discussing a different patient. Integrate relevant peer evidence with your own reports and explicitly discuss
+  conflicts in interpretation.
+
+  Use only evidence visible in the current input. Distinguish observations from hypotheses, preserve uncertainty,
+  and do not invent missing measurements. At every round, provide your current most likely principal diagnosis,
+  even if provisional; explain uncertainty in assessment.
+
+  Return JSON with assessment (concise evidence-based reasoning), answer (brief clinical conclusion), and finally
+  final_diagnosis. final_diagnosis must contain exactly one disease name written in full, using its standard name
+  without explanatory text, anatomic location qualifiers, alternatives, abbreviations in parentheses, confidence
+  words, treatment or formatting. Preserve disease-defining subtypes; put other details in assessment or answer.
+
+  Formatting example: final_diagnosis: "Pneumonia". Not: "Likely pneumonia (versus bronchitis), pending testing".
+  A provisional diagnosis still uses just the disease name in final_diagnosis; its uncertainty belongs in assessment.'
 generation:
   model: deepseek-v4-flash
   base_url: https://opencode.ai/zen/go/v1
@@ -71,6 +96,7 @@ outcome:
   method: majority
   agent: null
   scoring: ungraded
+  answer_field: final_diagnosis
 extraction:
   model:
     model: minimax-m2.5

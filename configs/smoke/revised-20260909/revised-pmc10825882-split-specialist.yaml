@@ -1,14 +1,13 @@
-# Complete, frozen configuration: one case, one condition, one replicate.
 schema_version: 1
-name: mcr24-pmc4299559-split-mismatched
+name: revised-pmc10825882-split-specialist
 replicate: 0
 dataset:
   adapter: canonical
-  path: ../../../data/medcasereasoning/pilot24/cases.jsonl
+  path: ../../../data/medcasereasoning/smoke-revised-20260909/cases.jsonl
   evidence_dictionary: null
   task: final_diagnosis
   case_ids:
-  - mcr-train-PMC4299559
+  - mcr-train-PMC10825882
   limit: 1
   selection_seed: 20260909
   allow_remote_processing: true
@@ -20,28 +19,28 @@ agents:
   prompt: You are a physician specializing in laboratory and pathology interpretation. Focus on specimen identity,
     measurements, tissue findings, thresholds and pertinent negatives; explain how these bear on the differential
     diagnosis and reconcile them with received evidence.
-  initial_context: 'Study patient: patient-83c70e83
+  initial_context: 'Study patient: patient-0b2439bc
 
-    Age: 25 years
+    Age: 54 years
 
     Sex as reported: female'
 - id: B
-  role: Clinical assessment specialist
-  prompt: You are a physician specializing in clinical assessment. Focus on history, symptoms, bedside examination
-    and temporal course; explain how these bear on the differential diagnosis and reconcile them with received evidence.
-  initial_context: 'Study patient: patient-83c70e83
-
-    Age: 25 years
-
-    Sex as reported: female'
-- id: C
   role: Imaging specialist
   prompt: You are a physician specializing in imaging interpretation. Focus on anatomy, imaging patterns, distribution
     and temporal changes; explain how these bear on the differential diagnosis and reconcile them with received
     evidence.
-  initial_context: 'Study patient: patient-83c70e83
+  initial_context: 'Study patient: patient-0b2439bc
 
-    Age: 25 years
+    Age: 54 years
+
+    Sex as reported: female'
+- id: C
+  role: Clinical assessment specialist
+  prompt: You are a physician specializing in clinical assessment. Focus on history, symptoms, bedside examination
+    and temporal course; explain how these bear on the differential diagnosis and reconcile them with received evidence.
+  initial_context: 'Study patient: patient-0b2439bc
+
+    Age: 54 years
 
     Sex as reported: female'
 topology:
@@ -57,9 +56,9 @@ context:
   distribution: by_category
   assignments:
     A:
-    - imaging
-    B:
     - laboratory
+    B:
+    - imaging
     C:
     - clinical
   evidence_visibility: every_round
@@ -101,7 +100,7 @@ generation:
 outcome:
   method: majority
   agent: null
-  scoring: ungraded
+  scoring: exact
   answer_field: final_diagnosis
 extraction:
   model:

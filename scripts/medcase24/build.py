@@ -5,7 +5,6 @@ The reviewed selection and source spans are fixed, not an automated diagnosis ju
 from __future__ import annotations
 import argparse, collections, copy, hashlib, itertools, json, re, statistics
 from pathlib import Path
-import pyarrow.parquet as pq
 import yaml
 
 SEED = 20260909
@@ -77,7 +76,20 @@ def describe(values):
 class Dumper(yaml.SafeDumper):
     def ignore_aliases(self,data): return True
 
+def shared_metadata(case_id, text):
+    # Only explicit opening demographics; never chief complaint or reference fields.
+    opening = text[:160]
+    age = re.search(r"\b(\d+)[ \-‐‑–](year|month)[ \-‐‑–]old\b", opening, re.I)
+    sex = re.search(r"\b(woman|girl|female|man|boy|male)\b", opening, re.I)
+    if not age or not sex:
+        raise ValueError(f"Review missing/ambiguous opening demographics for {case_id}")
+    reported_sex = "female" if sex[1].lower() in {"woman", "girl", "female"} else "male"
+    return (f"Study patient: patient-{sha(case_id)[:8]}\n"
+            f"Age: {age[1]} {age[2].lower()}s\nSex as reported: {reported_sex}")
+
+
 def build(parquet,root,base_config):
+    import pyarrow.parquet as pq
     raw_hash=hashlib.file_digest(parquet.open('rb'),'sha256').hexdigest()
     if raw_hash != EXPECTED_SHA: raise ValueError('Raw parquet checksum differs; do not reuse the frozen row IDs/span maps.')
     here=Path(__file__).parent
@@ -147,13 +159,13 @@ def build(parquet,root,base_config):
                 assignments={a:[seats[idx][a]] for a in ids} if condition.startswith('split') else {},
                 evidence_visibility='every_round',self_memory='all',peer_memory='last')
             cfg['rounds']=3; cfg['max_parallel']=3
-            cfg['outcome']=dict(method='majority',agent=None,scoring='ungraded')
+            cfg['outcome']=dict(method='majority',agent=None,scoring='ungraded',answer_field='final_diagnosis')
             cfg['agents']=[]
             for j,agent in enumerate(ids):
                 category=seats[idx][agent]
                 if condition=='split-mismatched':category=CATEGORIES[(CATEGORIES.index(category)+directions[idx])%3]
                 role,prompt=('Generic physician',GENERIC) if condition.endswith('generic') else ROLES[category]
-                cfg['agents'].append(dict(id=agent,role=role,prompt=prompt,initial_context=''))
+                cfg['agents'].append(dict(id=agent,role=role,prompt=prompt,initial_context=shared_metadata(cid,text)))
             filename=f'{cfg["name"]}.yaml'
             (cfgdir/filename).write_text('# Complete, frozen configuration: one case, one condition, one replicate.\n'+yaml.dump(cfg,Dumper=Dumper,sort_keys=False,allow_unicode=True,width=110))
             runs.append(dict(case_id=cid,condition=condition,config=str((cfgdir/filename).relative_to(root)),source_to_seat=seats[idx],role_by_seat={a['id']:a['role'] for a in cfg['agents']}))
@@ -162,7 +174,7 @@ def build(parquet,root,base_config):
     # Interleave cases/conditions in a fixed hash shuffle; no execution here.
     run_order=sorted(runs,key=lambda r:sha(f'{SEED}:run-order:{r["config"]}'))
     write_json(data/'run-matrix.json',run_order)
-    summary=dict(cohort_id='medcase24-v1',created='2026-09-09',source=dict(url=SOURCE_URL,revision='469a536',sha256=raw_hash,split='train',total_rows=len(rows)),
+    summary=dict(cohort_id='medcase24-v1',created='2026-09-09',protocol='same-patient-demographics-final-diagnosis-v2',source=dict(url=SOURCE_URL,revision='469a536',sha256=raw_hash,split='train',total_rows=len(rows)),
         network_or_model_calls_by_builder=0,eligible=len(eligible),reviewed=len(pool),selected=len(cases),configured_runs=len(runs),executed_runs=0,
         words=dict(train=describe([a['words'] for a in audit]),eligible=describe([a['words'] for a in eligible]),selected=describe([r['words'] for r in reviews])),
         stratum_counts=dict(collections.Counter(s['stratum'] for s in specs)),complexity_counts=dict(collections.Counter(s['complexity'] for s in specs)),

@@ -95,7 +95,7 @@ runs/RUN_DIR/
 
 These artifacts can contain dataset content; the entire `runs/` tree is private and ignored by Git. Request headers and API keys are never saved. A configuration hash includes prompts and schema-bearing source code is also hashed. Later stages reject changed configuration, changed code, incomplete upstream stages and altered input artifacts. Interrupted stages are explicitly failed/incomplete; they are not mixed into a complete corpus. Automatic resume and cross-run caches are intentionally absent in this small version.
 
-The raw JSON response is retained. For extraction, the agent's `assessment` and `answer` strings are rendered as `assessment + "\nFinal answer: " + answer`; span offsets refer to that rendered output, not to the raw JSON envelope. Provider token usage refers to the actual API call, and is kept separately.
+The raw JSON response is retained. In the revised diagnostic protocol, `final_diagnosis` is appended as a separate final line and selected explicitly for voting with `outcome.answer_field`; explanations remain in `assessment`/`answer`. Every round has its own outcome record. For legacy outputs, the agent's `assessment` and `answer` strings are rendered as `assessment + "\nFinal answer: " + answer`; span offsets refer to that rendered output, not to the raw JSON envelope. Provider token usage refers to the actual API call, and is kept separately.
 
 Annotations are per **mention**, not per cluster: `kind`, `attribution`, `certainty`, `polarity`, `clinical_domain`, `attributed_to`. Thus an observation can also be reported; "relay" is not forced into an exclusive choice with "fact". Semantic transmission still needs the actual visibility record plus matching, not the speaker's attribution alone. The extractor has no gold answer, and these labels are not expert truth labels. See [annotation conventions](docs/annotations.md).
 
@@ -133,3 +133,22 @@ settings and are retained unchanged. See [smoke findings](docs/deepseek-smoke-20
 OpenCode Go requires the client's own user agent and a stable conversation session
 header; the client now provides both and preserves separate agent conversations.
 [Provider requirements](https://opencode.ai/docs/go/#where-can-i-use-it).
+
+## Revised same-patient diagnosis validation
+
+[Protocol, per-round accuracy, measured Go usage and 120-trace forecast](docs/revised-smoke-20260909.md).
+The 120-case-condition study is prepared but awaits explicit user approval. Shared
+patient metadata is limited to an opaque study ID, age and sex as reported. Every
+revised diagnostic turn ends in a dedicated `final_diagnosis`; majority voting uses
+that field rather than the explanation. Disease-only formatting does not guarantee
+semantic agreement on synonyms or syndrome versus etiology.
+
+The independent checkout has its own ignored `.env` containing the OpenCode keys.
+Export its values explicitly before a live command; the client does not search the
+old project and never silently falls back from API 2:
+
+```sh
+set -a
+source .env
+set +a
+```

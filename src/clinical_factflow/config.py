@@ -86,6 +86,7 @@ class Context(Strict):
 
 
 class Outcome(Strict):
+    answer_field: Literal["answer", "final_diagnosis"] = "answer"
     method: Literal["majority", "agent"]
     agent: str | None = None
     scoring: Literal["exact", "ungraded"]

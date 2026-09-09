@@ -108,3 +108,14 @@ python scripts/medcase24/build.py \
 ```
 
 构建脚本不下载、不调用模型、不执行任何 run。已有目标 YAML 时拒绝覆盖。固定的 selection.json 和 partitions.json 是本次人工审阅决策的复现输入，不是一个可自动泛化到新病例的专业分类器。只保留元数据和所选题干，未将 99 MB 的完整原始文章 parquet 复制入新项目；原始下载目前留在临时缓存，可按固定 URL 与 checksum 重新取得。
+
+
+## 2026-09-09 protocol revision before execution
+
+The unexecuted 120 YAMLs now use the same-patient collaborative task prompt and a
+shared three-line block containing only an opaque study ID, stated age and reported
+sex. Source partitions and role rotations are unchanged. Every round adds one
+`final_diagnosis` disease-name field, selected explicitly for majority voting.
+See [revised smoke validation and approval gate](revised-smoke-20260909.md).
+The historical ten smoke YAMLs are retained unchanged; none of their responses
+are substituted into the revised experiment.

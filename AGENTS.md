@@ -36,3 +36,20 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - State explicitly that all evidence partitions and peer reports concern the same
   patient in a future protocol; some smoke agents wrongly treated peers as a
   different patient. Do not rewrite completed traces to conceal this behavior.
+
+## Revised smoke and approval gate (2026-09-09)
+
+- Read `docs/revised-smoke-20260909.md` before the 24 × 5 study. Two revised
+  split-specialist traces are complete; all 120 main-study traces await explicit
+  user approval of the reported cost/time/results. Do not treat a prior request
+  to prepare configs as approval to execute them.
+- New runs share only an opaque patient ID, age and reported sex, and explicitly
+  state that peer reports concern the same patient. These common fields are
+  deliberate duplicates, not three independent sources of evidence.
+- Revised diagnosis voting uses the required `final_diagnosis` field. Keep raw
+  `answer`/assessment for audit. One disease name does not resolve label ontology:
+  tumor-induced osteomalacia and its causative PMT are not interchangeable labels.
+- This checkout's `.env` is independent and ignored (mode 0600). Read API 2 here;
+  never depend on the old checkout for credentials or commit real key values.
+- The user explicitly deferred extraction/atomization fixes. Do not silently
+  bundle them into this diagnostic protocol change or spend API calls on them.

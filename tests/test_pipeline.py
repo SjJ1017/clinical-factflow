@@ -256,3 +256,70 @@ def test_http_empty_retry_and_private_audit(cfg,tmp_path,monkeypatch):
     assert len(value.facts)==1 and len(logs)==2
     assert "test-key-must-not-be-written" not in "".join(logs)
     assert {json.loads(x)["status"] for x in logs}=={"ok","failed"}
+
+
+def test_final_diagnosis_voting_ignores_explanatory_answer_strings(cfg, tmp_path):
+    from clinical_factflow.models import DiagnosticAnswer
+    cfg.outcome.answer_field = "final_diagnosis"
+    class DiagnosisClient(FakeClient):
+        def request(self, messages, response_model, sample_id, validate=None):
+            assert response_model is DiagnosticAnswer
+            value = DiagnosticAnswer(assessment="Provisional interpretation.",
+                answer=f"Different free-text conclusion for {sample_id}", final_diagnosis="Pneumonia")
+            return value, {"messages": messages}
+    out = run(cfg, tmp_path, DiagnosisClient)
+    case = next(iter(json.loads((out / "trace.json").read_text())["cases"].values()))
+    assert len({t["answer"] for t in case["turns"][-3:]}) == 3
+    assert len(case["round_outcomes"]) == 3
+    assert all(o["answer"] == "pneumonia" and not o["tie_abstention"] for o in case["round_outcomes"])
+    assert all(t["output_text"].endswith("Final diagnosis: Pneumonia") for t in case["turns"])
+    assert "Final diagnosis: Pneumonia" in case["turns"][3]["messages"][-1]["content"]
+    verify_run(cfg, out)
+
+
+def test_round_scoring_ties_and_no_final_field_fallback(cfg):
+    from clinical_factflow.runner import outcome
+    cfg.outcome.answer_field = "final_diagnosis"
+    cfg.outcome.scoring = "exact"
+    case = load_cases(cfg.dataset)[0]
+    case.reference = {"accepted_answers": ["Pneumonia"]}
+    turns = [dict(agent_id=a, round=r, answer="Pneumonia", final_diagnosis=d)
+             for r, diagnoses in [(1, ["Pneumonia", "Asthma", "Bronchitis"]),
+                                  (2, [" Pneumonia. ", "pneumonia", "Asthma"])]
+             for a, d in zip("ABC", diagnoses)]
+    first, second = (outcome(cfg, case, turns, r) for r in (1, 2))
+    assert first["tie_abstention"] and first["correct"] is False
+    assert sum(a["correct"] for a in first["agent_results"]) == 1
+    assert second["correct"] and sum(a["correct"] for a in second["agent_results"]) == 2
+    with pytest.raises(ValueError, match="exactly one"):
+        outcome(cfg, case, turns[:-1], 2)
+    del turns[0]["final_diagnosis"]
+    with pytest.raises(KeyError): outcome(cfg, case, turns, 1)
+
+
+def test_final_diagnosis_is_required_and_single_line():
+    from clinical_factflow.models import DiagnosticAnswer
+    for final in ("", "   ", "Pneumonia\nAsthma"):
+        with pytest.raises(ValueError):
+            DiagnosticAnswer(assessment="Uncertain", answer="Provisional", final_diagnosis=final)
+    with pytest.raises(ValueError): DiagnosticAnswer(assessment="Uncertain", answer="Provisional")
+
+
+def test_pilot_shared_metadata_has_only_identity_age_and_reported_sex(cfg):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("pilot_builder", ROOT / "scripts/medcase24/build.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for opening, age in [("A 71‐year‐old man has SECRET COMPLAINT.", "71 years"),
+                         ("An 18-month-old boy has SECRET COMPLAINT.", "18 months")]:
+        common = module.shared_metadata("synthetic-id", opening)
+        assert len(common.splitlines()) == 3 and f"Age: {age}" in common
+        assert "SECRET" not in common and "synthetic-id" not in common
+        for a in cfg.agents: a.initial_context = common
+        case = load_cases(cfg.dataset)[0]
+        assignment = allocate(case, cfg.agents, cfg.context)
+        for a in cfg.agents:
+            msg, delivery = messages_for(cfg, case, a, 1, [], assignment)
+            assert common in msg[-1]["content"]
+            assert delivery["initial_context_id"] == f"initial:{a.id}"
+    with pytest.raises(ValueError): module.shared_metadata("case", "Patient with no demographics.")

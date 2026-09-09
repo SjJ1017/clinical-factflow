@@ -1,6 +1,7 @@
 """Offline integrity checks for the prepared cohort and all 120 complete configs."""
 from __future__ import annotations
-import argparse, collections, hashlib, json
+import argparse, collections, copy, hashlib, json
+from build import shared_metadata
 from pathlib import Path
 from clinical_factflow.config import load_config, differences
 from clinical_factflow.datasets import allocate, load_cases
@@ -21,12 +22,17 @@ def check(root):
             assert s['start']==cursor and text[s['start']:s['end']]==s['text'];cursor=s['end']
         assert cursor==len(text)
         assert min(review['source_words'].values())>=30
+    review_by_id={r['id']:r for r in reviews}
     checks=0
     for row in matrix:
         path=root/row['config'];assert digest(path)==manifest['config_sha256'][row['config']]
         cfg=load_config(path); cases=load_cases(cfg.dataset);assert len(cases)==1
         case=cases[0]; assert case.id==row['case_id'];assert cfg.rounds==3
         by_case[case.id][row['condition']]=cfg.model_dump()
+        expected_metadata=shared_metadata(case.id,review_by_id[case.id]['original'])
+        assert all(a.initial_context==expected_metadata for a in cfg.agents)
+        assert cfg.outcome.answer_field=='final_diagnosis'
+        assert 'same patient' in cfg.task_prompt
         assert set(edges(cfg))=={(a,b) for a in 'ABC' for b in 'ABC' if a!=b}
         assert cfg.topology.schedule=='synchronous'
         assignment=allocate(case,cfg.agents,cfg.context);all_ids={s.id for s in case.evidence}
@@ -70,13 +76,15 @@ def check(root):
         assert arms['shared-specialist']['agents']==arms['split-specialist']['agents']
         assert arms['shared-generic']['agents']==arms['split-generic']['agents']
         assert len({a['prompt'] for a in arms['shared-generic']['agents']})==1
-        fixed={k:v for k,v in arms['shared-generic'].items() if k not in {'name','dataset'}}
+        fixed=copy.deepcopy({k:v for k,v in arms['shared-generic'].items() if k not in {'name','dataset'}})
+        for agent in fixed['agents']: agent['initial_context']='CASE_SPECIFIC_DEMOGRAPHICS'
         if global_fixed is None:global_fixed=fixed
         assert fixed==global_fixed
     assert set(manifest['source_seat_permutation_counts'].values())=={4}
     assert sorted(manifest['mismatch_direction_counts'].values())==[12,12]
     output=dict(status='passed',cases=24,configs=120,message_visibility_and_reference_isolation_checks=checks,
         verbatim_reconstruction=True,all_five_arms_have_identical_source_union=True,
+        identical_shared_demographics_across_all_agents_and_arms=True,
         role_mismatch_has_zero_correctly_matched_seats=True,unexpected_config_differences=0,
         source_seat_permutations='6 permutations × 4 cases',mismatch_derangements='2 directions × 12 cases',network_calls=0,
         note='Offline structural validation; no claim of clinical reference validity or measured model performance.')

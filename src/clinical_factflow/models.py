@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
 
 class Strict(BaseModel):
@@ -61,3 +61,17 @@ class SplitResult(Strict):
 class AgentAnswer(Strict):
     assessment: str = Field(min_length=1)
     answer: str = Field(min_length=1)
+
+
+class DiagnosticAnswer(AgentAnswer):
+    final_diagnosis: str = Field(min_length=1, description=(
+        "Exactly one disease name, in full. No explanation, differential list, "
+        "abbreviation, uncertainty qualifier or formatting. Put uncertainty in assessment."))
+
+    @field_validator("final_diagnosis")
+    @classmethod
+    def single_line_diagnosis(cls, value):
+        value = value.strip()
+        if not value or "\n" in value or "\r" in value:
+            raise ValueError("final_diagnosis must be a nonempty single-line disease name")
+        return value
