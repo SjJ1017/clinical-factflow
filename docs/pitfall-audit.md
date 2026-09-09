@@ -7,7 +7,7 @@ No historical numerical conclusion is imported as a new result.
 
 | Recorded problem | New handling | What still needs empirical validation |
 |---|---|---|
-| fix #1: omitted noun phrases were not resolved | Original speaker-visible context is supplied for reference resolution; clinical positive and ambiguous counterexamples in every run YAML | Human checks of extracted references; prompt wording is not a guarantee |
+| fix #1: omitted noun phrases were not resolved | Resolve within the target text only; missing referents remain ambiguous. Full visible-input context was removed after the MiniMax audit found leakage | Human checks of extracted references; prompt wording is not a guarantee |
 | fix #2: inconsistent conjunction splitting and narrow prefilter | Second atomization pass processes **all** parents; worked split / no-split examples; exact parent coverage required | Clinical granularity and conjunction error rate |
 | fix #3: subset siblings inflate apparent novelty | Preserve scope, uncertainty, time, values, units; dedupe within a record without discarding occurrences | New-corpus subset audit, not subtraction of an old 9.6% bias estimate |
 | fix #4: matching threshold cannot fix bad atoms | Inherited cutoff explicitly labeled unvalidated for this domain; no threshold loosening | Independent domain-specific gold for both blocker and NLI |

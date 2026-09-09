@@ -27,7 +27,9 @@ def spans(text, quote):
 
 
 def extract_record(client, cfg, record):
-    payload = json.dumps({"text": record["text"], "reference_context": record["reference_context"]}, ensure_ascii=False)
+    # Deliberately ignore legacy reference_context. Input profiles must reuse
+    # extracted source/self/peer records instead of re-extracting input here.
+    payload = json.dumps({"text": record["text"]}, ensure_ascii=False)
     result, info = client.request([
         {"role": "system", "content": cfg.system_prompt}, {"role": "user", "content": payload}],
         Extracted, record["id"] + "/extract", validate=require_facts)
@@ -39,8 +41,7 @@ def extract_record(client, cfg, record):
     for start in range(0, len(parent_ids), batch_size):
         keys = parent_ids[start:start+batch_size]
         batch = {k: parents[k].model_dump() for k in keys}
-        user = json.dumps({"parents": batch, "original_text": record["text"],
-                           "reference_context": record["reference_context"]}, ensure_ascii=False)
+        user = json.dumps({"parents": batch, "original_text": record["text"]}, ensure_ascii=False)
         split, call = client.request([
             {"role": "system", "content": cfg.atomize_prompt}, {"role": "user", "content": user}],
             SplitResult, record["id"] + f"/atomize/{start}", validate=lambda r: validate_splits(r, keys))
@@ -76,17 +77,14 @@ def records_for(cfg, cases, trace):
         cid = case["id"]
         for e in case["evidence"]:
             yield {"id": f"{cid}/source/{e['id']}", "text": e["text"],
-                   "reference_context": {"task": case["question"]},
                    "provenance": {"case_id": cid, "channel": "source", "source_id": e["id"], "category": e["category"]}}
         for agent in cfg.agents:
             if agent.initial_context:
                 yield {"id": f"{cid}/initial/{agent.id}", "text": agent.initial_context,
-                       "reference_context": {"task": case["question"]},
                        "provenance": {"case_id": cid, "channel": "initial", "agent_id": agent.id}}
         for turn in trace["cases"][cid]["turns"]:
-            # Exactly what the speaker could see, not future turns or withheld gold.
+            # Only this output is sent for extraction; provenance stays local.
             yield {"id": f"{cid}/output/{turn['id']}", "text": turn["output_text"],
-                   "reference_context": {"task": case["question"], "visible_input": turn["messages"][-1]["content"]},
                    "provenance": {"case_id": cid, "channel": "output", "agent_id": turn["agent_id"],
                                   "round": turn["round"], "turn_id": turn["id"]}}
 

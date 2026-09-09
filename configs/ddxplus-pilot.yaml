@@ -83,21 +83,21 @@ extraction:
     inferred from the reference answer: no answer key is provided.
 
 
-    reference_context is for resolving references ONLY. Extract from text ONLY, never import a fact merely present
-    in reference_context. Resolve pronouns AND omitted noun phrases; preserve names, patient identity, time,
-    numbers, units, negation, hedges, conditions and scope.
+    Extract from text ONLY. No external context is provided. Resolve pronouns and omitted noun phrases only
+    from the same text; if their referents are absent, preserve the ambiguity rather than filling it from medical
+    knowledge. preserve names, patient identity, time, numbers, units, negation, hedges, conditions and scope.
 
 
     Worked examples:
 
-    1. Context: the patient has a left renal mass. Text: "It measures 4.2 cm." -> "The patient''s left renal
-    mass measures 4.2 cm." Do not add the context-only diagnosis.
+    1. Text: "The patient has a left renal mass. It measures 4.2 cm." -> "The patient''s left renal mass measures
+    4.2 cm." With only "It measures 4.2 cm." and no named referent, do not invent an organ, side, mass or diagnosis.
 
     2. Text: "No fever or cough was reported." -> "The patient reported no fever."; "The patient reported no
     cough." Each is negated, reported, observation.
 
-    3. Context: CT of the chest was discussed. Text: "The scan is normal." -> "The patient''s chest CT is normal."
-    Counterexample: if two scans are in context, do not guess; retain the ambiguity and certainty=unclear.
+    3. Text: "CT of the chest was performed. The scan is normal." -> "The patient''s chest CT is normal." Counterexample:
+    if two scans are named in the same text, do not guess; retain the ambiguity and certainty=unclear.
 
     4. "Creatinine is 2.1 mg/dL and sodium is 128 mmol/L." -> two observations with original values and units.
     Do not change units or replace a value by "elevated".
@@ -137,7 +137,7 @@ extraction:
 
     Extract all propositions, including irrelevant ones. Skip greetings and purely organizational instructions.
     Keep each qualifying condition attached and list it in qualifiers. quote must be an exact nonempty span
-    of text (not reference_context); several facts may share the same quote.
+    of text; several facts may share the same quote.
 
 
     clinical_domain is a nonempty ARRAY of unique labels. Select every domain explicitly concerned by this atomic
@@ -168,12 +168,17 @@ extraction:
     - "The patient may have pneumonia." -> ["diagnosis"], without adding an unstated evidence domain.
 
     Re-evaluate each child''s domains after atomization. "CT shows a mass and sodium is low" splits into imaging-only
-    and laboratory-only facts, not two facts both labeled imaging+laboratory.'
+    and laboratory-only facts, not two facts both labeled imaging+laboratory.
+
+
+    Do not reconstruct another message. A peer attribution in text is not permission to retrieve or infer what
+    that peer said. Keep analysis brief; make one pass and return the JSON without repeated alternative drafts.
+    This instruction does not set a provider reasoning-token budget.'
   atomize_prompt: 'Check EVERY parent for incomplete reference resolution, attribution wrappers and compound
-    predicates. Use original_text and reference_context to disambiguate, never to invent or add a new claim.
-    Return every parent_id exactly once, with one or more parts. If unchanged, return it as one part. Each part
-    must carry its own annotation, qualifiers and exact quote from original_text. Re-evaluate annotations after
-    splitting; do not blindly inherit polarity or kind.
+    predicates. Use original_text alone to resolve references; no external context is provided. Never invent
+    or add a new claim. Return every parent_id exactly once, with one or more parts. If unchanged, return it
+    as one part. Each part must carry its own annotation, qualifiers and exact quote from original_text. Re-evaluate
+    annotations after splitting; do not blindly inherit polarity or kind.
 
 
     Examples:
@@ -228,7 +233,12 @@ extraction:
     - "The patient may have pneumonia." -> ["diagnosis"], without adding an unstated evidence domain.
 
     Re-evaluate each child''s domains after atomization. "CT shows a mass and sodium is low" splits into imaging-only
-    and laboratory-only facts, not two facts both labeled imaging+laboratory.'
+    and laboratory-only facts, not two facts both labeled imaging+laboratory.
+
+
+    Parents are intermediate candidates, not independent evidence. Verify text AND qualifiers against original_text;
+    do not promote an unsupported parent qualifier into a new fact. If a referent is missing, retain the ambiguity.
+    Keep analysis brief and return the JSON without repeated alternative drafts.'
   atomize_batch_size: 20
   atomize: all
 matching:

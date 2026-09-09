@@ -1,6 +1,6 @@
 # Clinical occurrence annotations
 
-The vocabulary is an initial operational proposal, not a validated clinical ontology. Every extractor response is schema-validated; malformed or missing items fail the stage. The second atomization pass receives every parent, the original text and exactly the speaker-visible context, and must return at least one part for each parent.
+The vocabulary is an initial operational proposal, not a validated clinical ontology. Every extractor response is schema-validated; malformed or missing items fail the stage. The second atomization pass receives every parent, the original text only, and must return at least one part for each parent.
 
 | Axis | Values | Operational question |
 |---|---|---|
@@ -38,3 +38,13 @@ are frozen in `configs/extraction/minimax-pilot-20260909.yaml`.
 This pilot tests the existing minimal structure; it does not add clinical truth,
 causal reasoning graphs, correctness, salience or gold-diagnosis labels to atoms.
 Review findings live in a separate audit, never as silently corrected model output.
+
+
+## Output-only boundary (v2)
+
+Current extraction uses only the target text; atomization uses that same text and
+its candidate parents. Resolve references inside that text, retaining ambiguity
+when unresolved. Never supply the agent's input to reconstruct missing output
+content. Initial evidence and common metadata are separate extractable records;
+visible input fact sets reuse their facts and actually delivered output facts.
+See [context and thinking audit](minimax-context-and-thinking-20260909.md).

@@ -29,7 +29,7 @@ Occurrence-level accounting is 139/164 located (84.8%); the extra occurrences co
 
 Of the 25 unlocated final mentions:
 
-- **20 are input-only imports**, all in S04 (split-specialist, R3). Tumor dimensions, detailed tissue/marker findings and prior reasoning were available in the reference context but absent from the current output. Six already-contaminated initial parents account for 19 final mentions; atomization introduced one additional context-only symptom fact.
+- **20 are input-only imports**, all in S04 (split-specialist, R3). Tumor dimensions, detailed tissue/marker findings and prior reasoning were available in the reference context but absent from the current output. Six initial parent texts account for 19 final mentions; a context-only symptom in another parent’s `qualifiers` was promoted by atomization into the twentieth. This qualifier path was clarified in the [follow-up audit](minimax-context-and-thinking-20260909.md).
 - **5 are quote-construction failures for target-supported content**: rewritten phrasing, expanding a shared modifier into a nonexistent contiguous span, or replacing a pronoun with its referent inside the quote. One was already present in the first pass and four appeared during atomization.
 
 These 20 imported facts may concern the same patient and may be true; the defect is attributing them to an output that did not express them. They would artificially inflate output coverage, persistence or transmission. No extracted outputs were silently corrected or dropped.

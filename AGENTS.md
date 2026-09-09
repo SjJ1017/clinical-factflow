@@ -93,3 +93,20 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - All calls including an 8,000-token truncation are accounted: 10.74 min, estimated
   $0.07663 Go allowance. Twelve responses omit cache fields; no cash-bill reconciliation.
 - No full extraction, matching, or paid diagnosis judging was authorized by this audit request.
+
+
+## Output-only extraction and thinking follow-up (2026-09-09)
+
+- User confirmed the boundary: extract each output from that output alone. Do not
+  expose full agent input as reference context in either pass. Reuse previously
+  extracted delivered facts for input profiles; original evidence/common metadata
+  need initial extraction and should be reused too. A cross-run cache is not yet implemented.
+- Read `docs/minimax-context-and-thinking-20260909.md`. The 20 context-only final
+  facts were all traceable to first-pass text OR qualifiers; atomization promoted
+  one qualifier. Do not repeat the earlier claim of an independent new import.
+- 51,207 was total output tokens, not thinking tokens. All 23 calls had thinking;
+  136,016 thinking characters and 94,799 formal characters, without a token split.
+- MiniMax M2.x provider docs say thinking cannot be disabled. Do not claim
+  `thinking: disabled` solves cost. No new model or hard reasoning budget is set.
+- Output-only v2 is implemented and offline-tested, not yet live-validated.
+  Preserve old pilot config and traces as v1 evidence; no paid calls this follow-up.
