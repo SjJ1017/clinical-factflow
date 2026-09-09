@@ -180,3 +180,8 @@ The user's subsequent [M3 accuracy check](docs/minimax-m3-accuracy-20260909.md)
 selects M3 with thinking disabled for future extraction. All ten sample texts are
 reviewed against their originals; 100% quote location does not imply perfect
 fidelity or domain labels. Historical runs and measurement configs remain frozen.
+
+
+Use the [resumable study extraction queue](docs/resumable-extraction.md) for timed
+production passes over frozen generation runs. It preserves per-request checkpoints,
+reuses original evidence with provenance, and stops automatically at a specified cutoff.

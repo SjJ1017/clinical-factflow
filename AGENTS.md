@@ -145,3 +145,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - 194 mentions, 194 located; strict fidelity pass 174 (10 clear errors, 10 review), domain-set pass 163 (24 clear errors, 7 review). This is unblinded Codex review, not clinician gold, clinical diagnosis accuracy or recall. Duplicate/granularity differences affect denominators.
 - 18/18 calls successful, zero returned thinking blocks, $0.03616 known allowance. New eight ran in 21.26 s; earlier two in 20.56 s. Do not claim a simultaneous ten-text benchmark. Reuse-aware six-worker full extrapolation 1.14–1.24 h, planning 1.5–2 h, plus matching/judging.
 - Joint-condition errors, missing shared durations, duplicate expansions and domain omissions persist. No new atom attributes or prompt fixes were introduced. No full extraction/matching/judging was launched by this accuracy check.
+
+
+## Authorized timed extraction (2026-09-09)
+
+- User authorized production M3 extraction for about 30 minutes, stopping by 17:00 Europe/Zurich. Started at 16:32; hard deadline 15:00 UTC. Read `docs/resumable-extraction.md`.
+- Active stage: `runs/medcase24-m3-extraction-20260909/`. Before starting any extraction, check its status, results and lock. Do not create a duplicate sweep. 1,487 tasks map to 3,355 original records with source/metadata reuse and output provenance isolation.
+- Resume through `python -m clinical_factflow.resumable_extraction` using the same study/config/out and a fresh duration. Do not copy the expired September 9 `--stop-at` into future runs. Private `resume.sh` schedules another 30 minutes only when explicitly run.
+- Both initial extraction and individual atomization batches have sealed checkpoints; successful raw responses can recover a narrowly interrupted checkpoint write. Completed records are hash-verified and skipped. Unknown in-flight usage remains unknown.
+- No automatic continuation after the cutoff is authorized. Matching and diagnostic judging remain separate. Full extraction is now authorized, but this session's runtime is explicitly bounded.
