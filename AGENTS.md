@@ -154,3 +154,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Resume through `python -m clinical_factflow.resumable_extraction` using the same study/config/out and a fresh duration. Do not copy the expired September 9 `--stop-at` into future runs. Private `resume.sh` schedules another 30 minutes only when explicitly run.
 - Both initial extraction and individual atomization batches have sealed checkpoints; successful raw responses can recover a narrowly interrupted checkpoint write. Completed records are hash-verified and skipped. Unknown in-flight usage remains unknown.
 - No automatic continuation after the cutoff is authorized. Matching and diagnostic judging remain separate. Full extraction is now authorized, but this session's runtime is explicitly bounded.
+
+
+## Timed extraction paused — final state (2026-09-09)
+
+- Stopped cleanly at 16:59:58 Europe/Zurich, before 17:00. Process exited; queue lock free. Do not treat the earlier running updates as current.
+- 616/1,487 records complete: 297 outputs, 300 unique sources, 19 metadata records. 25/120 trace extractions fully covered. 871 pending, including six validation-failed records; one pending record has a reusable successful stage checkpoint.
+- 1,037 successful requests saved; all finished result/task/record hashes verified. Real 30-record offline resume test made zero additional calls. 61 offline tests include a hung-worker hard-deadline test.
+- Known Go allowance $2.013; five deadline-related timeouts have unknown usage. No returned thinking blocks. Local session report and immutable first-session summary are in the queue directory.
+- No automatic continuation. `runs/medcase24-m3-extraction-20260909/resume.sh` uses the frozen private config and runs another 30 minutes only when invoked. Preserve checkpoints and source version; do not start a duplicate extraction directory.

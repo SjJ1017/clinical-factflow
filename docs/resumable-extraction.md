@@ -40,3 +40,12 @@ Preserve the saved source snapshot if the implementation is changed later. Resum
 ## Validation
 
 61 offline tests pass, including pause after initial extraction and resume without re-extraction, completed-record reuse with zero additional calls, corrupt-checkpoint rejection, sample/prompt separation, recovery from successful raw responses, and a real subprocess hard-deadline test with a deliberately hung fake model (no network). The full 120-run inventory was dry-checked before any production request; parent raw config hashes are checked without reserializing through a newer schema that may introduce default fields.
+
+
+## First session: stopped and verified
+
+The September 9 session stopped cleanly at **16:59:58 Europe/Zurich**, after 27 min 3.7 s of worker execution. It completed 616/1,487 records (297 outputs, 300 original sources, 19 metadata texts), covering 25/120 complete trace extractions. There are 871 pending records, including six validation-failed records and one record with a reusable partial-stage checkpoint.
+
+All 616 finished results passed integrity checks; 1,037 successful request checkpoints are saved. The OS lock is released and the process exited successfully. Known allowance was approximately $2.013, with usage unavailable for five deadline-related timeouts. Detailed local evidence is `runs/medcase24-m3-extraction-20260909/report.md` and `sessions/2026-09-09-first-session-summary.json`.
+
+The private `resume.sh` uses the queue's saved `extraction-config.yaml`. It does not contain an expired absolute deadline and runs only when explicitly invoked. No automatic continuation is scheduled.
