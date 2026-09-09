@@ -258,6 +258,7 @@ def create_policy(
     scorer_hash,
     parent=None,
     force_ids=(),
+    review=False,
 ):
     if (
         not all(math.isfinite(float(x)) for x in (blocker_threshold, nli_threshold))
@@ -267,12 +268,56 @@ def create_policy(
     ):
         raise ValueError("Invalid thresholds")
     force = set(force_ids)
+    review = review or bool(force)
+    existing = db.execute("SELECT * FROM policies WHERE name=?", (name,)).fetchone()
+    settings = (blocker_threshold, top_k, nli_threshold, scorer_hash, parent)
+    if existing:
+        previous = tuple(
+            existing[k]
+            for k in (
+                "blocker_threshold",
+                "top_k",
+                "nli_threshold",
+                "scorer_hash",
+                "parent",
+            )
+        )
+        old_force = {
+            r[0]
+            for r in db.execute(
+                "SELECT pair_id FROM annotations WHERE policy=? AND forced=1", (name,)
+            )
+        }
+        if (
+            previous != settings
+            or old_force != force
+            or bool(meta(db, "policy_review:" + name)) != review
+        ):
+            raise ValueError(
+                "Policy name already has different settings or review selection"
+            )
+        return
+    if review:
+        if not parent or not summary(db, parent)["complete"]:
+            raise ValueError("Complete the parent policy before selective review")
+        base = db.execute("SELECT * FROM policies WHERE name=?", (parent,)).fetchone()
+        if (
+            tuple(
+                base[k]
+                for k in ("blocker_threshold", "top_k", "nli_threshold", "scorer_hash")
+            )
+            != settings[:4]
+        ):
+            raise ValueError(
+                "Selective review must preserve the parent thresholds and scorer"
+            )
     if force and any(
         not db.execute("SELECT 1 FROM pairs WHERE pair_id=?", (i,)).fetchone()
         for i in force
     ):
         raise ValueError("Unknown forced pair")
     with db:
+        putmeta(db, "policy_review:" + name, review)
         db.execute(
             "INSERT INTO policies VALUES (?,?,?,?,?,?,?)",
             (
@@ -294,6 +339,22 @@ def create_policy(
                     and min(p["rank_a"], p["rank_b"]) <= top_k
                 )
                 forced = p["pair_id"] in force
+                if review and not forced:
+                    old = db.execute(
+                        "SELECT * FROM annotations WHERE policy=? AND pair_id=?",
+                        (parent, p["pair_id"]),
+                    ).fetchone()
+                    yield (
+                        name,
+                        p["pair_id"],
+                        old["relation"],
+                        old["decision_stage"],
+                        old["status"],
+                        old["reason"],
+                        old["judgment_id"],
+                        0,
+                    )
+                    continue
                 if not candidate and not forced:
                     why = (
                         "below_threshold"
@@ -782,6 +843,7 @@ def main():
                         pol["scorer_hash"],
                         args.policy,
                         ids,
+                        review=True,
                     )
                 else:
                     old_ids = {

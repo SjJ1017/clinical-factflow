@@ -429,3 +429,58 @@ def test_portable_cli_round_trip(tmp_path):
     assert len(rows) == 56 and all(
         r["test_data"] and r["status"] == "complete" for r in rows
     )
+
+
+def test_policy_creation_resumes_but_rejects_changed_settings(tmp_path):
+    db = ledger(tmp_path)
+    create_policy(db, "initial", 0.4, 4, 5.28, scorer_hash(CFG))
+    assert db.execute("SELECT COUNT(*) FROM annotations").fetchone()[0] == 28
+    with pytest.raises(ValueError, match="different settings"):
+        create_policy(db, "initial", 0.5, 4, 5.28, scorer_hash(CFG))
+
+
+def test_selective_review_inherits_the_specified_parent_not_latest_other_review(
+    tmp_path,
+):
+    db = ledger(tmp_path)
+    scorer = Counting()
+    score_policy(db, "initial", scorer, 7)
+    ids = [
+        r[0]
+        for r in db.execute(
+            "SELECT pair_id FROM annotations WHERE judgment_id IS NOT NULL LIMIT 2"
+        )
+    ]
+    create_policy(db, "review-one", 0.4, 4, 5.28, scorer_hash(CFG), "initial", [ids[0]])
+    score_policy(db, "review-one", scorer, 7)
+    create_policy(db, "review-two", 0.4, 4, 5.28, scorer_hash(CFG), "initial", [ids[1]])
+
+    def jid(policy, pair):
+        return db.execute(
+            "SELECT judgment_id FROM annotations WHERE policy=? AND pair_id=?",
+            (policy, pair),
+        ).fetchone()[0]
+
+    assert jid("review-one", ids[0]) != jid("initial", ids[0])
+    assert jid("review-two", ids[0]) == jid("initial", ids[0])
+    create_policy(
+        db,
+        "review-no-selection",
+        0.4,
+        4,
+        5.28,
+        scorer_hash(CFG),
+        "initial",
+        [],
+        review=True,
+    )
+    assert summary(db, "review-no-selection")["complete"]
+    assert jid("review-no-selection", ids[0]) == jid("initial", ids[0])
+
+
+def test_interrupted_geometry_is_archived_and_rebuilt(tmp_path):
+    (tmp_path / "x.building.sqlite").write_bytes(b"partial scratch build")
+    db = ledger(tmp_path)
+    assert summary(db, "initial")["pair_universe"] == 28
+    saved = list((tmp_path / "interrupted-builds").glob("*/x.building.sqlite"))
+    assert len(saved) == 1 and saved[0].read_bytes() == b"partial scratch build"

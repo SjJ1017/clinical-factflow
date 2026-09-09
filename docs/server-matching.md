@@ -99,7 +99,7 @@ python -m clinical_factflow.server_matching score \
   --config outputs/matching-resolved.yaml
 ```
 
-Original policies and scores stay intact. New policy names must be unique. A new policy uses the latest stored observation for the same scoring setting; old policies continue pointing to their original judgments. Model, tokenizer, quantization, prompt, batch-setting or code changes require a separately versioned output, not an in-place continuation.
+Original policies and scores stay intact. Reusing a policy name with identical settings resumes it; different settings require a new name. A new policy uses the latest stored observation for the same scoring setting; old policies continue pointing to their original judgments. Model, tokenizer, quantization, prompt, batch-setting or code changes require a separately versioned output, not an in-place continuation.
 
 ## Review boundaries
 
@@ -123,7 +123,7 @@ python -m clinical_factflow.server_matching export \
   --out outputs/boundary-second-pass-labels
 ```
 
-Second-pass judgments append to history, leaving the original policy unchanged. This is a new observation from the same model/configuration, not independent expert validation; deterministic local scores may be identical. For a different adjudicator or manual review, the exported pair IDs/texts and prior scores are the handoff material; preserve that as a separate measurement setting.
+Second-pass judgments append to history, leaving the original policy unchanged. Unselected pairs inherit exactly the specified parent policy; finish the parent before selective review. This is a new observation from the same model/configuration, not independent expert validation; deterministic local scores may be identical. For a different adjudicator or manual review, the exported pair IDs/texts and prior scores are the handoff material; preserve that as a separate measurement setting.
 
 ## Offline interface tests
 
