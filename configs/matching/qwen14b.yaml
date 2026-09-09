@@ -1,0 +1,43 @@
+# Inherited thresholds; clinical calibration is a separate measurement.
+version: pair-labeling-v1
+encoder:
+  backend: sentence_transformer
+  model: BAAI/bge-base-en-v1.5
+  revision: main
+  device: cpu
+  local_files_only: true
+scorer:
+  backend: local_qwen
+  model: Qwen/Qwen3-14B
+  revision: main
+  dtype: bfloat16
+  device: cuda
+  load_4bit: false
+  local_files_only: true
+  system_prompt: 'You judge logical entailment between two statements.
+
+
+    Question: if A is true, must B also be true?
+
+
+    Answer YES only when B follows necessarily from A. Answer NO when B could be
+
+    false while A is true, when B adds information A does not contain, or when the
+
+    two concern different subjects.
+
+
+    Do not consider whether either statement is actually true, and do not consider
+
+    whether they are about the same topic. Judge entailment only.
+
+
+    Reply with exactly one word: YES or NO.'
+  user_template: 'A: {a}
+
+    B: {b}'
+batch_size: 16
+policy:
+  blocker_threshold: 0.62
+  top_k: 12
+  nli_threshold: 5.28

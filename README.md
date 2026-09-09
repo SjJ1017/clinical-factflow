@@ -57,9 +57,15 @@ Export credentials explicitly in your shell. `.env.example` contains names only;
 
 Every `run` creates a distinct directory, including when identical YAML is repeated. There is no generation response cache, so identical generalist prompts still cause independent calls. Provider seed support is not guaranteed; when a seed is configured, per-case/agent/round/replicate seeds differ and are recorded in requests. Replicates remain necessary.
 
-To continue on a GPU machine, transfer the same code, YAML and permitted private run artifacts. Relative source paths are resolved locally without changing the configuration fingerprint; matching uses the frozen extraction rather than reopening the dataset. Do not change matching settings after generation: choose the intended host/model settings in the original run YAML. A changed measurement protocol belongs to a new run.
+To continue on a GPU machine, transfer the same code, YAML and permitted private run artifacts. Relative source paths are resolved locally without changing the configuration fingerprint; matching uses the frozen extraction rather than reopening the dataset. The legacy per-run matcher verifies the original run YAML. For the new server matcher, freeze the exported atoms and use an independent matching YAML and versioned policies/output. Changing a matching threshold does not require regenerating diagnoses.
 
-## Local matching
+## Server annotation of the MedCase24 study
+
+Use the [server guide](docs/server-matching.md) and `scripts/server_match.py` for the new all-pair ledger. Transfer one atoms-only archive alongside the Git checkout; no original traces or cloud API key are needed on the GPU host. Blocker negatives are explicit `UNRELATED` rows, with the same status as model negatives. Every pair retains lexical/cosine scores and ranks; model-evaluated pairs additionally retain both directional logits and margins. Threshold changes and boundary reviews create new policies without overwriting original observations.
+
+`configs/matching/qwen14b.yaml` is independent of generation. `scripts/smoke_matching.py` verifies the same interface with seeded random logits, including all-pair coverage, checkpoint resume and re-labeling. Synthetic results are visibly marked.
+
+## Legacy per-run local matching
 
 ```sh
 .venv/bin/python -m pip install -e '.[local]'

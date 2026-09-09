@@ -1,0 +1,14 @@
+# Synthetic scores only. Never use these labels as experimental findings.
+version: pair-labeling-v1
+encoder:
+  backend: random_mock
+  seed: 1729
+  dimensions: 24
+scorer:
+  backend: random_mock
+  seed: 31415
+batch_size: 7
+policy:
+  blocker_threshold: 0.4
+  top_k: 4
+  nli_threshold: 5.28

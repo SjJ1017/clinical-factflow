@@ -163,3 +163,13 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - 1,037 successful requests saved; all finished result/task/record hashes verified. Real 30-record offline resume test made zero additional calls. 61 offline tests include a hung-worker hard-deadline test.
 - Known Go allowance $2.013; five deadline-related timeouts have unknown usage. No returned thinking blocks. Local session report and immutable first-session summary are in the queue directory.
 - No automatic continuation. `runs/medcase24-m3-extraction-20260909/resume.sh` uses the frozen private config and runs another 30 minutes only when invoked. Preserve checkpoints and source version; do not start a duplicate extraction directory.
+
+
+## Resume and portable matching (2026-09-09, latest user authorization)
+
+- The user explicitly resumed all remaining production extraction. The 17:00 cutoff applied to the earlier completed session; do not mistake its 616-record summary for the latest state. Read the current queue status and lock before any new launch.
+- `scripts/continue_extraction.py` uses the frozen extraction engine and schedules previous failures last. `scripts/recover_extraction_schema.py` is an explicit, separately audited schema-validation retry for failed stages only, with distinct request keys. It keeps the same M3 settings, target-only text, atom schema and successful checkpoints. Never hand-map invalid model annotation values or overwrite valid records.
+- Server annotation uses `scripts/server_match.py` / `clinical_factflow.server_matching`, independent YAMLs in `configs/matching/`, and the atoms-only bundle. Read `docs/server-matching.md`. The legacy per-run matcher is not the all-pair export.
+- Every same-case distinct-node pair has a row. Blocker and local-model negatives share UNRELATED; model failures remain null/pending. Store lexical components, cosine, endpoint ranks, both directional YES/NO logits/log masses and margins, settings and decision provenance. Never drop blocker negatives.
+- Threshold policies append to the ledger; selected boundary rejudgments append observations. Missing scores after blocker expansion need actual scoring. Old labels and observations stay available. Real Qwen GPU accuracy/performance is not established by synthetic interface tests.
+- Git excludes real data/ledgers. Transfer the generated atom archive separately. Mock outputs use test_data=true and cannot be cited as semantic results.

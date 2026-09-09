@@ -84,3 +84,10 @@ Thumbs.db
 *.ckpt
 
 # Keep reproducibility files (e.g. uv.lock) and synthetic JSONL fixtures tracked.
+
+# Portable matching ledgers and transfer bundles
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.building.sqlite*
+/exports/

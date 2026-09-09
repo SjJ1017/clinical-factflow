@@ -1,0 +1,16 @@
+# Real cached BGE + random model logits; test data, not semantic validation.
+version: pair-labeling-v1
+encoder:
+  backend: sentence_transformer
+  model: BAAI/bge-base-en-v1.5
+  revision: main
+  device: cpu
+  local_files_only: true
+scorer:
+  backend: random_mock
+  seed: 31415
+batch_size: 7
+policy:
+  blocker_threshold: 0.62
+  top_k: 12
+  nli_threshold: 5.28
