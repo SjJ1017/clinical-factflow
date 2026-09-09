@@ -106,3 +106,18 @@ Accuracy: `outcome.scoring: exact` requires explicit accepted answers and is app
 The new prompts incorporate known extraction failures and are a **new protocol**. Offline tests verify plumbing and failure handling; they do not establish clinical extraction/NLI accuracy. No live generation, minimax extraction, 14B model inference, full dataset download or data-access submission was performed when building this project. Local-model inference still needs verification on the intended GPU host.
 
 The direct ClinicalBench adapter handles documented report fields but requires a real-cohort audit of summary boundaries, omitted sections, time cutoffs and diagnosis leakage. It does not silently fix invalid JSON. MedCaseReasoning is kept as an intact presentation; a clinician-reviewed, lossless partition should be exported in the canonical format for role × information studies, rather than assigning guessed specialties by keyword. MIMIC-CDM and nonmedical candidates are evaluated in the research memo; they are **not claimed as integrated adapters**. A generic canonical adapter lets reviewed evidence partitions enter the same runner.
+
+## Frozen MedCaseReasoning pilot: 24 cases × 5 conditions
+
+See [selection, partition caveats and experiment design](docs/medcase24-pilot.md).
+`configs/pilots/medcase24/` contains 120 complete run YAMLs for the shared/split ×
+generic/specialist design plus fully mismatched specialists. The preparation and
+integrity-checking scripts live in `scripts/medcase24/`; they make no model calls.
+
+The selected source text, reference answers, generated viewer and screening audit
+are local files under the ignored `data/medcasereasoning/pilot24/` directory. They
+are not included in this Git repository. Rebuild them from the pinned official
+training Parquet using the instructions in the selection memo before validating or
+running the pilot configs. The partitions were reviewed by an assistant, not
+clinician-certified; clinical scoring remains ungraded. No pilot traces have been
+generated.

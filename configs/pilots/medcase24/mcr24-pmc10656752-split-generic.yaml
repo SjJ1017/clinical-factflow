@@ -1,0 +1,213 @@
+# Complete, frozen configuration: one case, one condition, one replicate.
+schema_version: 1
+name: mcr24-pmc10656752-split-generic
+replicate: 0
+dataset:
+  adapter: canonical
+  path: ../../../data/medcasereasoning/pilot24/cases.jsonl
+  evidence_dictionary: null
+  task: final_diagnosis
+  case_ids:
+  - mcr-train-PMC10656752
+  limit: 1
+  selection_seed: 20260909
+  allow_remote_processing: true
+  clinical_summary_stop: Auxiliary Examination
+  clinical_include_impressions: false
+agents:
+- id: A
+  role: Generic physician
+  prompt: You are a physician participating in a case conference. Assess the available evidence, identify uncertainties
+    and reconcile your assessment with received evidence.
+  initial_context: ''
+- id: B
+  role: Generic physician
+  prompt: You are a physician participating in a case conference. Assess the available evidence, identify uncertainties
+    and reconcile your assessment with received evidence.
+  initial_context: ''
+- id: C
+  role: Generic physician
+  prompt: You are a physician participating in a case conference. Assess the available evidence, identify uncertainties
+    and reconcile your assessment with received evidence.
+  initial_context: ''
+topology:
+  kind: full
+  schedule: synchronous
+  hub: null
+  order:
+  - A
+  - B
+  - C
+  edges: []
+context:
+  distribution: by_category
+  assignments:
+    A:
+    - laboratory
+    B:
+    - clinical
+    C:
+    - imaging
+  evidence_visibility: every_round
+  self_memory: all
+  peer_memory: last
+rounds: 3
+max_parallel: 3
+task_prompt: You are participating in a clinical case conference for research. Use the evidence visible in your
+  current input. Distinguish observations from hypotheses, preserve uncertainty, and explain conflicts with peers.
+  Produce a concise evidence-based assessment and one principal answer. Do not invent missing measurements. Return
+  assessment and answer as JSON fields.
+generation:
+  model: glm-5.3-flash
+  base_url: https://opencode.ai/zen/go/v1
+  api_key_env: OPENCODE_API_KEY
+  temperature: 0.7
+  max_tokens: 1600
+  timeout_seconds: 120
+  attempts: 3
+  seed: null
+  extra_body: {}
+outcome:
+  method: majority
+  agent: null
+  scoring: ungraded
+extraction:
+  model:
+    model: minimax-m2.5
+    base_url: https://opencode.ai/zen/go/v1
+    api_key_env: OPENCODE_API_KEY
+    temperature: 0.0
+    max_tokens: 8000
+    timeout_seconds: 120
+    attempts: 3
+    seed: null
+    extra_body: {}
+  system_prompt: 'Extract every proposition expressed in text, including clinical observations, explicit inferences
+    and recommendations. A proposition need not be true. Never add your own clinical inference. Return no truths
+    inferred from the reference answer: no answer key is provided.
+
+
+    reference_context is for resolving references ONLY. Extract from text ONLY, never import a fact merely present
+    in reference_context. Resolve pronouns AND omitted noun phrases; preserve names, patient identity, time, numbers,
+    units, negation, hedges, conditions and scope.
+
+
+    Worked examples:
+
+    1. Context: the patient has a left renal mass. Text: "It measures 4.2 cm." -> "The patient''s left renal mass
+    measures 4.2 cm." Do not add the context-only diagnosis.
+
+    2. Text: "No fever or cough was reported." -> "The patient reported no fever."; "The patient reported no cough."
+    Each is negated, reported, observation.
+
+    3. Context: CT of the chest was discussed. Text: "The scan is normal." -> "The patient''s chest CT is normal."
+    Counterexample: if two scans are in context, do not guess; retain the ambiguity and certainty=unclear.
+
+    4. "Creatinine is 2.1 mg/dL and sodium is 128 mmol/L." -> two observations with original values and units. Do
+    not change units or replace a value by "elevated".
+
+    5. "B suggests pneumonia because of the opacity." -> "The patient may have pneumonia." (inference, reported,
+    possible, attributed_to=B); "The opacity supports pneumonia in the patient." (inference, reported). Never turn
+    a suspicion into a confirmed diagnosis.
+
+    6. "The patient denies chest pain but the ECG suggests ischemia." -> separate negated observation and affirmed
+    inference; do not copy one polarity to both.
+
+    7. "If bleeding persists, consider endoscopy." -> one conditional recommendation. Do not assert that bleeding
+    persists or endoscopy occurred.
+
+    8. "The patient previously had hepatitis B." keeps the historical time. "The patient has hepatitis B" is not
+    the same assertion.
+
+
+    Atomicity: one independently assertable predicate per fact; distribute both/all over named entities; split apposition
+    and lists. Counterexamples: "head and neck cancer", "salt and pepper appearance", "Bosnia and Herzegovina",
+    a joint necessary condition, a numeric range and "X or Y may explain this" are not separate affirmed facts.
+    Do not split a diagnostic disjunction into confirmed diagnoses.
+
+    Strip a superficial speaker wrapper from text but store the reporting act in attribution and attributed_to.
+    Preserve epistemic hedges in text. "The report does not include a creatinine result" is a claim about missing
+    documentation, not a normal creatinine observation. "The patient reports no pain" remains reported rather than
+    an objectively measured absence.
+
+    kind: observation = reported/measured patient finding; inference = diagnostic/causal/evaluative conclusion expressed
+    by speaker; recommendation = proposed test/treatment; general_knowledge = non-patient-specific medical proposition;
+    discourse = substantive claim about a document or discussion.
+
+    attribution: direct = speaker states it without attributing it; reported = explicitly attributes to patient/report/peer;
+    unknown = indeterminate. This is not proof of actual copying. certainty: asserted/probable/possible/conditional/unclear.
+    polarity: affirmed/negated. clinical_domain: history/examination/laboratory/imaging/pathology/diagnosis/treatment/other.
+    These are occurrence annotations, not gold truth labels.
+
+    Extract all propositions, including irrelevant ones. Skip greetings and purely organizational instructions.
+    Keep each qualifying condition attached and list it in qualifiers. quote must be an exact nonempty span of text
+    (not reference_context); several facts may share the same quote.'
+  atomize_prompt: 'Check EVERY parent for incomplete reference resolution, attribution wrappers and compound predicates.
+    Use original_text and reference_context to disambiguate, never to invent or add a new claim. Return every parent_id
+    exactly once, with one or more parts. If unchanged, return it as one part. Each part must carry its own annotation,
+    qualifiers and exact quote from original_text. Re-evaluate annotations after splitting; do not blindly inherit
+    polarity or kind.
+
+
+    Examples:
+
+    "The patient has fever and cough." -> two observations: fever; cough.
+
+    "The patient denies fever but pneumonia is possible." -> a negated reported observation of no fever; a possible
+    affirmed inference of pneumonia.
+
+    "A reports sodium is 128 mmol/L." -> "The patient''s sodium is 128 mmol/L." with attribution=reported and attributed_to=A,
+    preserving measurement and unit.
+
+    "CT suggests malignancy." -> "The patient''s CT suggests malignancy." Keep uncertainty: never "The patient has
+    malignancy" as an asserted observation.
+
+    "Both knees are swollen." -> "The patient''s left knee is swollen." and "The patient''s right knee is swollen."
+    Do not also retain the quantified duplicate.
+
+
+    Counterexamples: retain "head and neck cancer", "salt and pepper appearance", "Bosnia and Herzegovina", numeric
+    ranges, joint conditions, and uncertainty disjunctions as appropriate. "CT does not describe the lymph nodes"
+    is not "The patient''s lymph nodes are normal". Never weaken 12.3% to about 12%, drop a temporal qualifier,
+    or infer an absent symptom from an unmentioned symptom. Keep the parent''s complete meaning across its parts,
+    and keep all quotes even when spans overlap.'
+  atomize_batch_size: 20
+  atomize: all
+matching:
+  model: Qwen/Qwen3-14B
+  revision: main
+  dtype: bfloat16
+  device: cuda
+  batch_size: 16
+  load_4bit: false
+  local_files_only: true
+  entailment_threshold: 5.28
+  threshold_provenance: Inherited historical science-domain cutoff; not calibrated or validated for clinical facts.
+  blocker_model: BAAI/bge-base-en-v1.5
+  blocker_revision: main
+  blocker_threshold: 0.62
+  blocker_top_k: 12
+  blocker_metric: max_cosine_containment
+  system_prompt: 'You judge logical entailment between two statements.
+
+
+    Question: if A is true, must B also be true?
+
+
+    Answer YES only when B follows necessarily from A. Answer NO when B could be
+
+    false while A is true, when B adds information A does not contain, or when the
+
+    two concern different subjects.
+
+
+    Do not consider whether either statement is actually true, and do not consider
+
+    whether they are about the same topic. Judge entailment only.
+
+
+    Reply with exactly one word: YES or NO.'
+  user_template: 'A: {a}
+
+    B: {b}'
+  cluster_policy: complete_link

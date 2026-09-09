@@ -1,10 +1,86 @@
-.venv/
-.env
+# Python bytecode and native extensions
 __pycache__/
-.pytest_cache/
-*.egg-info/
-data/
-runs/
-models/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments and local environment variables
+.Python
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+!.env.template
+.envrc
+.pdm-python
+.python-version.local
+
+# Packaging and build output
+build/
 dist/
+develop-eggs/
+.eggs/
+*.egg-info/
+*.egg
+*.whl
+MANIFEST
+pip-wheel-metadata/
+
+# Tests, coverage, type checkers and linters
+.pytest_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+.cache/
+
+# Notebook and documentation output
+.ipynb_checkpoints/
+docs/_build/
+site/
+
+# Local editor and operating-system files
+.idea/
+.vscode/
 .DS_Store
+._*
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs, databases and local secrets
+*.log
+*.sqlite3
+*.sqlite3-journal
+.secrets/
+*.pem
+*.key
+
+# Project-specific: source datasets, private traces, derived artifacts and weights
+/data/
+/runs/
+/models/
+/outputs/
+/artifacts/
+/checkpoints/
+*.parquet
+*.arrow
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# Keep reproducibility files (e.g. uv.lock) and synthetic JSONL fixtures tracked.

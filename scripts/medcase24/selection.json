@@ -1,0 +1,242 @@
+[
+  {
+    "row": 1251,
+    "stratum": "cardiovascular",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Abdominal presentation must be reconciled with pericardial imaging, transudative fluid and conflicting infection serologies.",
+    "caveat": "Vaccine timing is an exposure observation, not evidence of causation.",
+    "pmcid": "PMC10656752",
+    "prompt_sha256": "0aac0bfba762ef5feefe8e5185a10a048f4bcd9a70f6e5ec257ce4c3b74f2bcf"
+  },
+  {
+    "row": 5351,
+    "stratum": "cardiovascular",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Combine chest pain and shock, myocardial injury markers, MRI tissue pattern and unobstructed coronary arteries.",
+    "caveat": "Myocarditis is relatively recognizable; retain as an information-rich difficulty anchor.",
+    "pmcid": "PMC8819635",
+    "prompt_sha256": "eac4eaf1e4bc24419900941c7557e008648c1aca4270ff7dc9cfa86be6c29a20"
+  },
+  {
+    "row": 9564,
+    "stratum": "cardiovascular",
+    "complexity": "higher",
+    "mechanism": "inflammatory",
+    "rationale": "Delayed postprocedural timing, serial inflammatory markers, sterile cultures and newly emerging effusion require temporal integration.",
+    "caveat": "The prompt calls cardiac enzymes normal although troponin is marginally above its printed cutoff; preserve and flag the inconsistency.",
+    "pmcid": "PMC6426006",
+    "prompt_sha256": "2229688837084b98aac987b34e7fc92c1e3200ef723953af08fc91c9426edae5"
+  },
+  {
+    "row": 9648,
+    "stratum": "cardiovascular",
+    "complexity": "higher",
+    "mechanism": "thrombotic",
+    "rationale": "Valve lesions and repeated emboli need integration with absent infection signals and imaging evidence of disseminated malignancy.",
+    "caveat": "The primary malignancy is not identified; do not require its identity in scoring.",
+    "pmcid": "PMC11250082",
+    "prompt_sha256": "aa6eddf0d6dca39e643afa43512f5ab87581928de7882dba6132f6f3f416baf8"
+  },
+  {
+    "row": 2577,
+    "stratum": "respiratory",
+    "complexity": "moderate",
+    "mechanism": "posttraumatic",
+    "rationale": "Fracture timing, evolving respiratory/neurologic findings, thrombocytopenia and initially unrevealing brain imaging must be reconciled.",
+    "caveat": "A clinical syndrome is the target; absent rash and normal early MRI are retained, not silently treated as exclusions.",
+    "pmcid": "PMC10448136",
+    "prompt_sha256": "eafc926b30ce729798cea90060db7bba164a154bd46b1a511a5203a32d1800c9"
+  },
+  {
+    "row": 6853,
+    "stratum": "respiratory",
+    "complexity": "higher",
+    "mechanism": "infectious",
+    "rationale": "Immunosuppression and sequential skin, lung, brain and ocular abnormalities create a disseminated-infection integration task.",
+    "caveat": "Organism confirmation is absent from case_prompt; the reference is a plausible leading diagnosis, not uniquely proven microbiology.",
+    "pmcid": "PMC6802327",
+    "prompt_sha256": "a792ae4feb88d9b5cf296ac68710e8d8514d4c9d5b108655f0ad86c1c0ec1d90"
+  },
+  {
+    "row": 3956,
+    "stratum": "respiratory",
+    "complexity": "higher",
+    "mechanism": "neoplastic",
+    "rationale": "Effusion without a solid mass, nonclonal pleural biopsy and malignant fluid immunophenotype provide discordant compartment-specific findings.",
+    "caveat": "Pleural tissue and pleural fluid must never be conflated; both are retained with their specimen identities.",
+    "pmcid": "PMC10366758",
+    "prompt_sha256": "3ac87d3a3e87721ba020fb24b08910daf1068835b5de483a1a2178647cff8c55"
+  },
+  {
+    "row": 5140,
+    "stratum": "respiratory",
+    "complexity": "moderate",
+    "mechanism": "drug_related",
+    "rationale": "Drug initiation and procedure timing must be combined with hemorrhagic lung changes, patent pulmonary veins and negative infection/autoimmune studies.",
+    "caveat": "Procedural lung injury remains a competing explanation; reference causality requires cautious grading.",
+    "pmcid": "PMC6510000",
+    "prompt_sha256": "21ba9b4893414a1df95f5b80a10e50174fbe6949bc4bd100560fb323c7f7da8c"
+  },
+  {
+    "row": 7130,
+    "stratum": "neurologic",
+    "complexity": "higher",
+    "mechanism": "inflammatory",
+    "rationale": "Rapid neurologic deterioration, MRI morphology, isolated CSF bands and negative competing panels require joint interpretation.",
+    "caveat": "The precise Marburg variant label is more specific than generic demyelinating disease; preserve hierarchical scoring options for later clinician review.",
+    "pmcid": "PMC10857919",
+    "prompt_sha256": "44dba6da618c9650b603ee6d41450eca7ea5533cb10722c56c1051c88fd7b967"
+  },
+  {
+    "row": 760,
+    "stratum": "neurologic",
+    "complexity": "higher",
+    "mechanism": "neuropathic",
+    "rationale": "Disproportionately mild pain, severe structural knee destruction and peripheral sensory/nerve findings connect bedside, imaging and laboratory evidence.",
+    "caveat": "This is a neuro-musculoskeletal case; the broad stratum is an analyst grouping, not a dataset specialty label. Positive syphilis antibody does not by itself establish the cause of neuropathy.",
+    "pmcid": "PMC8649473",
+    "prompt_sha256": "6dc291d7cfb06441cdf51a1510764de6cdc55fdc913eca7f2edaf1f604fb75c2"
+  },
+  {
+    "row": 282,
+    "stratum": "neurologic",
+    "complexity": "moderate",
+    "mechanism": "vascular",
+    "rationale": "Recurrent alternating deficits, infarcts of different ages and collateral angiography must be reconciled with laboratory exclusion evidence.",
+    "caveat": "Imaging is highly diagnostic; retain as an anchor rather than claiming every partition is equally necessary.",
+    "pmcid": "PMC12000239",
+    "prompt_sha256": "842f56425804638712eec3bae4387be0318ddc1326682a46730e8b868e60b8b3"
+  },
+  {
+    "row": 6807,
+    "stratum": "neurologic",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Optic and spinal findings, lesion extent, AQP4 serology and lupus-associated findings connect several diagnostic sources.",
+    "caveat": "Positive AQP4 is a strong clue; distinguish the neurologic syndrome from associated systemic disease.",
+    "pmcid": "PMC9867851",
+    "prompt_sha256": "f97401045a0e8b89afc76b3f11f1ebfcd27d133e884238599bf4e5fef1bd6faf"
+  },
+  {
+    "row": 1388,
+    "stratum": "abdominal",
+    "complexity": "higher",
+    "mechanism": "inherited",
+    "rationale": "Chronic malabsorption, family history, bronchiectasis and pancreatic changes span respiratory and gastrointestinal systems.",
+    "caveat": "No sweat chloride or genetic confirmation is supplied; do not score unprovided genotype.",
+    "pmcid": "PMC8649608",
+    "prompt_sha256": "624b192094ea681b2366ffafbf52cb98338bd860bb14f92a58d2d1c79e0a4b48"
+  },
+  {
+    "row": 9195,
+    "stratum": "abdominal",
+    "complexity": "higher",
+    "mechanism": "neoplastic",
+    "rationale": "Skin/joint presentation and extreme lipase must be linked to pancreatic and hepatic lesions despite an earlier inflammatory interpretation.",
+    "caveat": "Acinar histology is not supplied; retain explicit reference-specificity uncertainty.",
+    "pmcid": "PMC7599369",
+    "prompt_sha256": "33bc4be2d018d2ea4f575163864cb5733885f271771fb6a2c4bcdb23342d31cc"
+  },
+  {
+    "row": 6288,
+    "stratum": "abdominal",
+    "complexity": "moderate",
+    "mechanism": "infectious",
+    "rationale": "Subacute obstruction, inflammatory markers and an invasive pelvic abscess surrounding a retained device require cross-source linkage.",
+    "caveat": "Culture or sulfur-granule confirmation is not supplied; reference is a leading etiologic hypothesis.",
+    "pmcid": "PMC2194704",
+    "prompt_sha256": "14de6ceb05011f87ace9fbf26a23c7647757a3fdc9d2c45b1c3bdc922af7c271"
+  },
+  {
+    "row": 8918,
+    "stratum": "abdominal",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Early pregnancy and an initially gynecologic interpretation must be reconciled with persistent symptoms, enzyme measurements and later pancreatic imaging.",
+    "caveat": "Acute pancreatitis is better supported than the precise hemorrhagic subtype in the reference; grading must separate these levels.",
+    "pmcid": "PMC4299559",
+    "prompt_sha256": "b1e1943cf8745bf5291f8aca2c04133106ffff03c3deec4aa44b7c6f6ba39fed"
+  },
+  {
+    "row": 3580,
+    "stratum": "renal_metabolic",
+    "complexity": "higher",
+    "mechanism": "vascular",
+    "rationale": "Recurrent bilateral renal infarcts/dissections, serial function and negative systemic/genetic workup form a longitudinal vascular problem.",
+    "caveat": "No arterial histology is supplied; vasculopathy remains a clinical-radiologic inference.",
+    "pmcid": "PMC8075308",
+    "prompt_sha256": "7dbce007db4650cae8a6057f41db8c4cda841bed88cf0b8ea8ecdcaf6273a65f"
+  },
+  {
+    "row": 9793,
+    "stratum": "renal_metabolic",
+    "complexity": "moderate",
+    "mechanism": "inherited",
+    "rationale": "Familial childhood presentation, pigmentation, ACTH/cortisol response and preserved mineralocorticoid features require integration.",
+    "caveat": "No causal gene is given; do not require a molecular subtype.",
+    "pmcid": "PMC3369203",
+    "prompt_sha256": "18d54e54b19e101c87af762527c8fe1f2855a1fb9f7a8d225e373a449a79951b"
+  },
+  {
+    "row": 10700,
+    "stratum": "renal_metabolic",
+    "complexity": "moderate",
+    "mechanism": "neoplastic",
+    "rationale": "Resistant hypertension/hypokalemia, endocrine axes and discordant pituitary/adrenal/lung imaging localize an endocrine source.",
+    "caveat": "The reference is an endocrine syndrome, not a histologic lung-cancer subtype.",
+    "pmcid": "PMC10509380",
+    "prompt_sha256": "9be566c21064b8025c04e4f73810d7635a5b76546277118ea89db6d14b917411"
+  },
+  {
+    "row": 4628,
+    "stratum": "renal_metabolic",
+    "complexity": "higher",
+    "mechanism": "neoplastic",
+    "rationale": "Longstanding phosphate loss and skeletal injury must be linked to a sinonasal lesion and detailed tissue findings.",
+    "caveat": "Strong tissue clues are present; duration and renal phosphate handling carry a separate source of evidence.",
+    "pmcid": "PMC10825882",
+    "prompt_sha256": "875d1c4915f5fad28981a870e55f4fc8b9fdbaa09f0e5335a831e41bb2074e1f"
+  },
+  {
+    "row": 11187,
+    "stratum": "systemic",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Diabetic history, hand phenotype, microvascular findings and subclinical lung involvement compete with antibody results.",
+    "caveat": "Functional tests accompany imaging; they are assigned to bedside assessment, with the boundary documented.",
+    "pmcid": "PMC9465903",
+    "prompt_sha256": "16e480639af383c11d129f37aaf93baf1c5bf3c375a8e5727b2a666b8a2a8357"
+  },
+  {
+    "row": 1166,
+    "stratum": "systemic",
+    "complexity": "higher",
+    "mechanism": "infectious",
+    "rationale": "Immunosuppression, progressive multisite disease, competing CMV findings and small tissue yeasts require broad integration.",
+    "caveat": "Tissue morphology supports but does not alone prove species; preserve the source reference as a reference, not exhaustive fact truth.",
+    "pmcid": "PMC6412033",
+    "prompt_sha256": "b2b98b978697747b79f854aa41583ca0013c1291bfb8c89ebb5f666addca0d35"
+  },
+  {
+    "row": 8669,
+    "stratum": "systemic",
+    "complexity": "higher",
+    "mechanism": "inflammatory",
+    "rationale": "Prolonged fever without classic cranial symptoms and unrevealing conventional workup must be reconciled with vascular PET uptake.",
+    "caveat": "Imaging supports large-vessel inflammation; the precise diagnosis remains a clinical inference.",
+    "pmcid": "PMC4219628",
+    "prompt_sha256": "aa968e3464e101c9dd26c3396db19af16d85749b3615470befd82c6966439c97"
+  },
+  {
+    "row": 423,
+    "stratum": "systemic",
+    "complexity": "moderate",
+    "mechanism": "inflammatory",
+    "rationale": "Serial multifocal bone imaging, antibiotic nonresponse and sterile inflammatory tissue findings connect musculoskeletal and systemic evidence.",
+    "caveat": "This is a clinical exclusion diagnosis; do not equate negative cultures alone with definitive proof of a noninfectious process.",
+    "pmcid": "PMC3420544",
+    "prompt_sha256": "5f3ff02ea5d354f3f5c0de92759007af8f82699447daf98c721958993d5f15e7"
+  }
+]
