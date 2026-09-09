@@ -66,3 +66,29 @@ def test_successful_raw_response_recovered_after_checkpoint_interruption(tmp_pat
   def request(self,*a,**kw):raise AssertionError('Must recover without a model call')
  got,info=CheckpointClient(setting.model,tmp_path,True,threading.Event(),time.time()+60,Never).request(messages,Extracted,'task')
  assert got==value and info['call_id']=='raw'
+
+def test_cli_hard_deadline_stops_a_hung_worker_without_network(tmp_path):
+    import subprocess, sys
+    import yaml
+    config=tmp_path/'config.yaml'
+    config.write_text(yaml.safe_dump({'extraction':cfg().model_dump()}))
+    (tmp_path/'.env').write_text('OPENCODE_API_KEY_2=OFFLINE_TEST_ONLY\n')
+    code='''
+import sys,time
+from pathlib import Path
+import clinical_factflow.resumable_extraction as r
+r.build_tasks=lambda *a:([{'id':'hung','record':{'id':'hung','text':'The patient is male.','provenance':{}},'bindings':[]}],[])
+class Hung:
+ def __init__(self,*a):pass
+ def request(self,*a,**kw):time.sleep(30);raise AssertionError('Watchdog should already have exited')
+original=r.execute
+r.execute=lambda tasks,cfg,target,deadline,stop:original(tasks,cfg,target,deadline,stop,client_factory=Hung)
+sys.argv=['test','--study','.', '--config','config.yaml','--out','out','--minutes','0.1']
+r.main()
+'''
+    start=time.monotonic()
+    result=subprocess.run([sys.executable,'-c',code],cwd=tmp_path,capture_output=True,text=True,timeout=12)
+    assert result.returncode==0,result.stderr
+    assert time.monotonic()-start<10
+    assert (tmp_path/'out/hard-stop.json').exists()
+    assert json.loads((tmp_path/'out/status.json').read_text())['status']=='paused'

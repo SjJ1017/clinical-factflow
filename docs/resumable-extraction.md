@@ -39,4 +39,4 @@ Preserve the saved source snapshot if the implementation is changed later. Resum
 
 ## Validation
 
-60 offline tests pass, including pause after initial extraction and resume without re-extraction, completed-record reuse with zero additional calls, corrupt-checkpoint rejection, sample/prompt separation and recovery from successful raw responses. The full 120-run inventory was dry-checked before any production request; parent raw config hashes are checked without reserializing through a newer schema that may introduce default fields.
+61 offline tests pass, including pause after initial extraction and resume without re-extraction, completed-record reuse with zero additional calls, corrupt-checkpoint rejection, sample/prompt separation, recovery from successful raw responses, and a real subprocess hard-deadline test with a deliberately hung fake model (no network). The full 120-run inventory was dry-checked before any production request; parent raw config hashes are checked without reserializing through a newer schema that may introduce default fields.
