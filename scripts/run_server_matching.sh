@@ -43,6 +43,9 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES="$EXPECTED_GPU_UUID"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 export TORCH_COMPILE_DISABLE=1 TORCHDYNAMO_DISABLE=1 TORCHINDUCTOR_DISABLE=1
+# PyTorch 2.14 can dispatch eager Blackwell ops through native JIT independently.
+export TORCH_DISABLE_NATIVE_JIT=1
+echo "Native JIT disabled; use built-in eager kernels"
 export DISABLE_KERNEL_MAPPING=1 FF_ATTN=eager TOKENIZERS_PARALLELISM=false
 export HF_HOME="$SCRATCH_ROOT/hf-datasets"
 export HF_HUB_CACHE="$HF_HOME/hub" TRANSFORMERS_CACHE="$HF_HOME/hub"

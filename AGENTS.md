@@ -231,3 +231,9 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Successful GPU1 launch at 2026-09-09 23:58:25 UTC, tmux `clinical-match-gpu1`, results `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1`, bundle `exports/medcase24-two-gpu/gpu4`. UUID and actual CUDA kernel check passed with sharing_authorized=true. Do not launch the same second shard on GPU4.
 - Launch command uses `GPU=1 ALLOW_GPU_SHARING=1 PYTHON=/scratch/users/jiajun/venv-matcher-blackwell/bin/python MATCH_SESSION=clinical-match-gpu1 MATCH_BUNDLE=exports/medcase24-two-gpu/gpu4 MATCH_OUT=/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1 ./scripts/run_server_matching.sh`.
 - App heartbeat `gpu-1` is a one-time follow-up around five minutes after successful launch. Read `/scratch/users/jiajun/clinical-factflow/gpu1-launch-baseline.json`, actual ledgers, fresh log tail and tmux/processes. Ignore old cu126 failure. Do not infer other-user training slowdown from GPU utilization alone, and do not create further recurring monitoring without a request.
+
+
+## Blackwell first-batch issue and fix
+
+- The 23:58:25 UTC launch passed CUDA but its first Qwen batch failed: PyTorch 2.14 eager Blackwell outer-product bmm dispatched through new native Triton JIT, whose compilation failed because Python.h is absent. No model judgments were saved; blocker ledger/checkpoints are reusable. The earlier 'successfully relaunched' note referred to preflight, not scored batches.
+- Use `TORCH_DISABLE_NATIVE_JIT=1` in the launcher, alongside the existing compilation-disable flags, to use built-in eager kernels without system package changes. PyTorch `_native/common_utils.py` documents this environment switch. Record a later real-scoring check before declaring the GPU1 worker healthy. The five-minute heartbeat was paused during this repair.
