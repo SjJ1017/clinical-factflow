@@ -222,3 +222,12 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Latest user explicitly chooses to share physical GPU 1 despite the stable ~0.9 GB / ~10% existing job, and requests a check five minutes after launch. This supersedes the no-sharing restriction for GPU 1 only. Do not stop or alter the other user's process.
 - `ALLOW_GPU_SHARING=1` explicitly enables sharing in the launcher; UUID binding, CUDA verification and at least 38,000 MiB free remain required. Default launches still reject sharing.
 - Second shard remains `exports/medcase24-two-gpu/gpu4` (historical assignment name), 128,601 pairs, but is to run in tmux `clinical-match-gpu1` with output `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1`. Never also launch its gpu4 copy. GPU 0 continues its separate shard.
+
+
+## GPU 1 successfully relaunched with Blackwell runtime (2026-09-10)
+
+- User resumed compatibility work and authorized running the second shard on shared GPU 1. Original cu126 preflight failed with no kernel image for sm_120; that attempt exited before matching. Do not mistake its old append-only log entries for a current failure.
+- The independent copy `/scratch/users/jiajun/venv-matcher-blackwell` now contains PyTorch 2.14.0+cu130 and sm_120 support. Original `/scratch/users/jiajun/venv-matcher` remains 2.14.0+cu126 for GPU0. All non-Torch package settings, model weights, BF16/batch16/thresholds are unchanged. Compatibility setup finished before the temporary cancellation was checked; the later user explicitly authorized using it.
+- Successful GPU1 launch at 2026-09-09 23:58:25 UTC, tmux `clinical-match-gpu1`, results `/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1`, bundle `exports/medcase24-two-gpu/gpu4`. UUID and actual CUDA kernel check passed with sharing_authorized=true. Do not launch the same second shard on GPU4.
+- Launch command uses `GPU=1 ALLOW_GPU_SHARING=1 PYTHON=/scratch/users/jiajun/venv-matcher-blackwell/bin/python MATCH_SESSION=clinical-match-gpu1 MATCH_BUNDLE=exports/medcase24-two-gpu/gpu4 MATCH_OUT=/scratch/users/jiajun/clinical-factflow/medcase24-pairs-gpu1 ./scripts/run_server_matching.sh`.
+- App heartbeat `gpu-1` is a one-time follow-up around five minutes after successful launch. Read `/scratch/users/jiajun/clinical-factflow/gpu1-launch-baseline.json`, actual ledgers, fresh log tail and tmux/processes. Ignore old cu126 failure. Do not infer other-user training slowdown from GPU utilization alone, and do not create further recurring monitoring without a request.
