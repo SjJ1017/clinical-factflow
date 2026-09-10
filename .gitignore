@@ -91,3 +91,6 @@ Thumbs.db
 *.sqlite-shm
 *.building.sqlite*
 /exports/
+
+# Local viewers and analysis outputs contain source data and private traces
+/findings/

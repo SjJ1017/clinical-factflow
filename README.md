@@ -191,3 +191,9 @@ fidelity or domain labels. Historical runs and measurement configs remain frozen
 Use the [resumable study extraction queue](docs/resumable-extraction.md) for timed
 production passes over frozen generation runs. It preserves per-request checkpoints,
 reuses original evidence with provenance, and stops automatically at a specified cutoff.
+
+## Completed matching: compact export and trace viewer
+
+See [the compact-results guide](docs/compact-matching-viewer.md) for the two-store
+export (atoms + numeric relations), retained raw scores, offline threshold analysis
+and English trace viewer. Generated reports remain local and ignored by Git.
