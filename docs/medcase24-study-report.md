@@ -101,3 +101,65 @@ Data-level assertions check all 120 traces / 1,080 outputs, 8,640 profile rows,
 novelty counts. Exported graph SVGs were rasterized and visually checked for arrow
 and label placement. This is not a real-browser layout audit; the browser's prior
 local-file URL denial was not bypassed.
+
+## Follow-up: outcome, source correctness and mismatch
+
+`analyze.py` now calls `followup.py` after the original analysis. For an existing
+base analysis, rerun only `followup.py`, then `build.py`. Both are entirely offline.
+Additional checks: `.venv/bin/python scripts/study_report/check_followup.py`.
+
+- The outcome axis spans 0–100%; there is no 50% normalization or ceiling. R3
+  synonym-majority S accuracy ranges from 37.5–50%, versus 62.5–79.2% for S+L.
+  Six cases earn S in all five conditions, seven earn S in none, and eleven vary.
+  L/U/non-credit cannot automatically be interpreted as clinically wrong answers.
+- Source correctness uses the existing reviewed name labels, never new model calls.
+  Default S+L sources are compared with D sources; U and abstentions are excluded.
+  S-only sensitivity also excludes L. Each source's immediately following self and
+  two peer outputs must actually contain its output in their visible context.
+  Measure total retained source units / total source units, average the two peers
+  within source turn, and then average within case. These are separate retention
+  opportunities, not exclusive attribution or a probability for independent facts.
+- The primary adjusted association compares correct and D sources within the same
+  case × condition × source round, then averages those contrasts within case before
+  bootstrapping cases. Only mixed-label panels enter; role/information assignment
+  remains a possible confound. Default R1 has 42 mixed panels / 15 cases, whereas
+  R2 has only 6 / 5. Descriptive group means and matched-panel differences target
+  different populations and must not be subtracted interchangeably.
+- Default R1→R2 within-panel differences: self +10.31 pp [2.20,18.16], peers
+  +7.37 pp [3.37,10.97]. Restricting to profession-tagged units reduces the peer
+  difference to +3.41 pp [0.31,6.35]. That subset excludes units tagged only as
+  diagnosis/treatment/other; it is not a newly adjudicated pure-evidence subset.
+- Mismatch has two explicitly separated alignment questions. The same-case
+  matched split-specialist run supplies (a) the same-information/same-seat agent
+  and (b) the same-prompted-role/different-seat agent. Eight-tag output composition
+  uses total-variation distance. R3 role-distance minus information-distance is
+  +0.0264 [0.0074,0.0451]: slightly closer to the information-aligned reference.
+  Exact-node Jaccard sensitivity is reported separately; no missing cross-run
+  semantic pair is inferred from a trace-local score list.
+- The alternative whole-condition comparison uses split/generic with the same
+  information versus shared/specialist with the same role. Its R3 composition
+  difference is +0.0230 [-0.0004,0.0450], inconclusive. By contrast, the distance
+  between per-case three-role mean uptake primes favors shared/specialist:
+  role-distance minus information-distance −4.64 pp [-8.12,-1.35]. Mean R3 prime
+  is +3.47 pp for mismatch, −4.48 for split/generic and +2.44 for shared/specialist.
+  Prime-distance analysis requires all three agent primes in all three conditions
+  to be defined; missing R1 professions must not change the compared case mean.
+  Composition and uptake selectivity are different observed states, not a single
+  causal decomposition of information and role effects.
+- Scatter plots show five fixed condition rows and three horizontally aligned round
+  panels on a shared −100…100 pp axis. Each colored point is a case-agent prime;
+  role means/CIs and case-mean overall means/CIs are separate. Missing denominators
+  stay NA. Default R1 has 10 NA in each matched split condition and 39 in mismatch;
+  all R2/R3 rows have 72 defined points. Jitter is deterministic across rounds.
+- `followup-observations.json` contains 11,520 source uptake rates and 864 aligned
+  comparisons for each alignment design. `summary.json` and the standalone HTML
+  include all controls, raw scatter points and case-cluster intervals. Additional
+  API cost is zero. Bootstrap intervals remain exploratory, without multiplicity
+  correction or clinician validation of D/U labels.
+
+Follow-up verification covers explicit NA plotting, 72 unique case-agent records
+per condition/round/control combination, three balanced profession colors,
+case-cluster weighting, mixed-panel eligibility, and different-seat role alignment.
+All eight scatter-control variants and 32 correctness-control variants are checked
+alongside the original 324 UI configurations. Three exported scatter SVG panels
+were rasterized for visual inspection; no browser-policy workaround was used.

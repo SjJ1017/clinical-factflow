@@ -202,4 +202,7 @@ def main():
  (DEST/'summary.json').write_text(json.dumps(payload,ensure_ascii=False,separators=(',',':'),allow_nan=False))
  (DEST/'audit.json').write_text(json.dumps(audit,indent=2))
  print(json.dumps(audit,indent=2))
-if __name__=='__main__':main()
+if __name__=='__main__':
+ main()
+ from followup import extend
+ extend(json.loads((DEST/'summary.json').read_text()))

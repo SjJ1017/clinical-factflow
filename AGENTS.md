@@ -265,3 +265,21 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - New requested counts use equivalence connected components or entailment weak components; do not mix with the previous report's complete-link counts. Round/new counts use round/prefix-induced graphs with no future bridge nodes.
 - Shared diagnostic/treatment/other labels are not assigned to any profession. Generic/shared virtual roles follow matched-specialist seats; generic/split follows information; mismatch follows actual prompts. Peer-excess is an additional symmetry diagnostic, not a redefinition of the user's prime.
 - Source graph A→B denominators use A's immediately previous output, classified by B's profession. Both own/other rates and self loops are present. Do not turn each arrow into exclusive causal attribution or average pooled counts in place of case-level ratios.
+
+## 2026-09-10: follow-up outcome and uptake analysis
+
+- `scripts/study_report/analyze.py` now also computes `followup.py`; rebuild remains
+  offline. Do not rerun name judging. All original API costs are unchanged.
+- Near-50% outcome curves are strict same-specificity scoring, not a chart cap;
+  L and U must stay visible. R3 S = 37.5–50%, S+L = 62.5–79.2%.
+- Correctness→next-round uptake is observational. Compare S(+L) with D, excluding U;
+  matched case/condition/round panels provide a sensitivity to case difficulty.
+  R2→R3 has only five eligible mixed-panel cases under S+L. Do not portray the
+  bootstrap interval as population-wide evidence of causal rejection of errors.
+- Distinguish mismatch composition alignment from uptake-prime alignment. R3
+  composition retains some information alignment, while case-mean uptake prime
+  is closer to shared/specialist than split/generic. Precise definitions and CIs
+  are in `docs/medcase24-study-report.md`; these are different dimensions of state.
+- Three-round five-row scatter panels retain undefined prime as NA (39/72 for
+  mismatched R1), not zero. Counterbalanced professions determine point colors;
+  preserve case-level clustering when calculating means and confidence intervals.

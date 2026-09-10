@@ -26,3 +26,17 @@ for(let [id,el] of elements){assert(!el.innerHTML.includes('NaN'),id+' NaN');ass
 for(const [i,svg] of [...get('graphPanels').innerHTML.matchAll(/<svg[\s\S]*?<\/svg>/g)].entries())fs.writeFileSync('/tmp/medcase-graph-'+i+'.svg',svg[0]);
 assert.equal([...get('graphPanels').innerHTML.matchAll(/marker-end=/g)].length,18);
 fs.writeFileSync('/tmp/medcase-accuracy.svg',get('agentAccuracy').innerHTML.replace(/class="annotation"/g,'font-size="11" fill="#687b80"'));
+vm.runInContext(`
+for(const unit of ['equivalence','atoms'])for(const scheme of ['fractional','inclusive'])for(const match of ['equivalence','entailment']){
+ $('unit').value=unit;$('scheme').value=scheme;$('match').value=match;renderStrips();renderMismatch();
+ const expected=D.followup.points.filter(r=>followupSelected(r)&&r.uptake_prime!=null).length;
+ const actual=($('primeStrips').innerHTML.match(/class="case-agent-dot"/g)||[]).length;
+ if(actual!==expected)throw Error('Scatter NA/point count mismatch');
+ if(($('primeStrips').innerHTML.match(/<svg/g)||[]).length!==3)throw Error('Three aligned round panels required');
+ for(const grading of ['same','inclusive'])for(const scope of ['all','professional']){$('sourceGrade').value=grading;$('sourceScope').value=scope;renderAssociations();if($('associationTable').innerHTML.includes('undefined'))throw Error('Association data missing')}
+}
+$('unit').value='equivalence';$('scheme').value='fractional';$('match').value='equivalence';$('sourceGrade').value='inclusive';$('sourceScope').value='all';renderStrips();renderAssociations();renderMismatch();
+`,context);
+for(const [i,svg] of [...get('primeStrips').innerHTML.matchAll(/<svg[\s\S]*?<\/svg>/g)].entries())fs.writeFileSync('/tmp/medcase-strip-'+i+'.svg',svg[0]);
+for(let [id,el] of elements){assert(!el.innerHTML.includes('NaN'),id+' NaN');assert(!el.innerHTML.includes('undefined'),id+' undefined')}
+console.log('Follow-up controls passed: eight scatter variants, 32 correctness variants, explicit NA counts.');
