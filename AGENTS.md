@@ -255,3 +255,13 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Counts distinguish atomic nodes (exact text + qualifiers), occurrences, direct relation pairs and conservative complete-link groups. The English viewer uses direct equivalence with saved delivery visibility; no transitive closure or synchronous same-round edges. Source facts and common metadata are reusable inputs, not newly extracted per round.
 - Saved margins near the 5.28 cutoff occur on 0.25 steps: 5.28 and 5.50 yield identical labels. Sensitivity is not clinical matching accuracy. Diagnosis labels remain unadjudicated.
 - Viewer verification uses offline JavaScript logic and exact-text checks, not a real-browser visual check. The browser tool rejected the local-file reference page under URL policy; do not bypass it via a different protocol/browser.
+
+
+## 2026-09-10: role/information report and name-level accuracy
+
+- Completed report: `findings/medcase24-study/index.html`; read `docs/medcase24-study-report.md`. Rebuild with `scripts/study_report/analyze.py` then `build.py`; these are offline. Raw/aggregated JSON contains all requested per-case denominators and paired-case contrasts.
+- Latest user authorizes short-name judging without thinking, within USD 0.10. Two MiniMax M3 passes plus one malformed response cost an estimated USD 0.02182356 total, zero returned thinking blocks. Revised 278-pair results in `runs/medcase24-name-judge-20260910-v2/`; 13 explicit review corrections/flags are separate. Keep v1 audit but never use its permissive cause/level matches for report accuracy. Do not pay to rejudge for a rebuild.
+- Fuzzy primary is same-specificity synonym matching. Optional S+L is taxonomic name compatibility; U needs review and stays in the denominator. This short-context score is not the older case-supported clinical adjudication. Exact normalization and reference-blind semantic voting are documented.
+- New requested counts use equivalence connected components or entailment weak components; do not mix with the previous report's complete-link counts. Round/new counts use round/prefix-induced graphs with no future bridge nodes.
+- Shared diagnostic/treatment/other labels are not assigned to any profession. Generic/shared virtual roles follow matched-specialist seats; generic/split follows information; mismatch follows actual prompts. Peer-excess is an additional symmetry diagnostic, not a redefinition of the user's prime.
+- Source graph A→B denominators use A's immediately previous output, classified by B's profession. Both own/other rates and self loops are present. Do not turn each arrow into exclusive causal attribution or average pooled counts in place of case-level ratios.

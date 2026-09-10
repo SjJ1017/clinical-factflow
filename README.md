@@ -197,3 +197,10 @@ reuses original evidence with provenance, and stops automatically at a specified
 See [the compact-results guide](docs/compact-matching-viewer.md) for the two-store
 export (atoms + numeric relations), retained raw scores, offline threshold analysis
 and English trace viewer. Generated reports remain local and ignored by Git.
+
+## Role / information study report
+
+The [study-report guide](docs/medcase24-study-report.md) documents round-wise
+accuracy, equivalence/entailment component counts, professional loyalty, both
+multi-label weighting rules and directed uptake graphs. Rebuilding is offline;
+completed name-judging labels and all generated reports remain local.
