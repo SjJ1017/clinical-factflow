@@ -237,3 +237,10 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 
 - The 23:58:25 UTC launch passed CUDA but its first Qwen batch failed: PyTorch 2.14 eager Blackwell outer-product bmm dispatched through new native Triton JIT, whose compilation failed because Python.h is absent. No model judgments were saved; blocker ledger/checkpoints are reusable. The earlier 'successfully relaunched' note referred to preflight, not scored batches.
 - Use `TORCH_DISABLE_NATIVE_JIT=1` in the launcher, alongside the existing compilation-disable flags, to use built-in eager kernels without system package changes. PyTorch `_native/common_utils.py` documents this environment switch. Record a later real-scoring check before declaring the GPU1 worker healthy. The five-minute heartbeat was paused during this repair.
+
+
+## GPU1 real scoring verified after native-JIT fix
+
+- At 2026-09-10 00:06:32 UTC: GPU1 has 432 real bidirectional judgments, 27 complete batches and one historical failed batch from before the JIT fix. Current successful PID 1003790 is on physical UUID GPU-48b6a969-145c-80ef-aab9-c23313102319, about 30 GB, alongside the authorized existing job. GPU0 PID 918462 remains active.
+- `TORCH_DISABLE_NATIVE_JIT=1` solved the actual Qwen first-batch failure; original algorithms, prompts, BF16 precision and batch16/threshold settings are unchanged. Separate CUDA 13 runtime only on GPU1.
+- Heartbeat `gpu-1` has been updated for one check five minutes after this verified success, with the 432-pair baseline and historical failure explicitly noted. It should report progress/new errors and pause itself after the single check. Do not restart merely because the append-only log contains old failed launches.
