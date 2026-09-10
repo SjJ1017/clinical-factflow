@@ -283,3 +283,22 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Three-round five-row scatter panels retain undefined prime as NA (39/72 for
   mismatched R1), not zero. Counterbalanced professions determine point colors;
   preserve case-level clustering when calculating means and confidence intervals.
+
+## 2026-09-10: correctness by final outcome and majority status
+
+- Report section 07 and `social_uptake.py` reuse saved labels, no API calls. Source
+  correctness refers to final diagnosis naming, not the truth of every atomic fact.
+- Final-error R1 sign reversal rests on 3 mixed-source cases: peer correct−D gap
+  −9.42 pp, bootstrap CI [−14.29,−4.74], but t sensitivity [−21.28,2.44]. Do not
+  claim robust population significance from a tiny nonparametric bootstrap.
+  Final-error R2 has no mixed-correctness panels, so its contrast is NA.
+- Strict 2:1 minority source facts have lower R2→R3 peer uptake (−7.08 pp,
+  bootstrap [−10.32,−3.97], 13 cases); cross-opinion and previously-unexpressed
+  checks preserve the direction. There are no correct-minority/two-D-majority
+  panels; this missing conflict prevents isolating truth from majority influence.
+- Final correctness is downstream of uptake. Outcome conditioning and source
+  majority are descriptive groupings, not evidence of subjective cognition or a
+  causal effect. Large planned trace counts are not independent case counts.
+- Rebuild now: `analyze.py` includes followup and social analysis; use optional
+  `report` dependencies for SciPy. `check_social.py` adds denominator/strata/CI
+  checks; `check.cjs` adds 672 social-control combinations.

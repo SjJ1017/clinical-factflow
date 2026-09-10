@@ -40,3 +40,12 @@ $('unit').value='equivalence';$('scheme').value='fractional';$('match').value='e
 for(const [i,svg] of [...get('primeStrips').innerHTML.matchAll(/<svg[\s\S]*?<\/svg>/g)].entries())fs.writeFileSync('/tmp/medcase-strip-'+i+'.svg',svg[0]);
 for(let [id,el] of elements){assert(!el.innerHTML.includes('NaN'),id+' NaN');assert(!el.innerHTML.includes('undefined'),id+' undefined')}
 console.log('Follow-up controls passed: eight scatter variants, 32 correctness variants, explicit NA counts.');
+vm.runInContext(`
+let socialStates=0;
+for(let c of ['all',...D.conditions])for(let grade of ['same','inclusive'])for(let scope of ['all','professional'])for(let unit of ['equivalence','atoms'])for(let match of ['equivalence','entailment'])for(let measure of Object.keys(socialMeasureNames)){
+ $('socialCondition').value=c;$('socialGrade').value=grade;$('socialScope').value=scope;$('socialUnit').value=unit;$('socialMatch').value=match;$('socialMeasure').value=measure;renderSocial();socialStates++;
+ for(let id of ['socialAssociation','socialMajority','socialConflict','socialCoverage','socialFinding'])if(/NaN|undefined/.test($(id).innerHTML))throw Error(id+' contains invalid result');
+ if(($('socialAssociation').innerHTML.match(/<tr>/g)||[]).length!==7)throw Error('Outcome strata table coverage');
+}
+console.log('Social uptake controls passed: '+socialStates+' combinations.');
+`,context);

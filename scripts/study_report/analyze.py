@@ -206,3 +206,5 @@ if __name__=='__main__':
  main()
  from followup import extend
  extend(json.loads((DEST/'summary.json').read_text()))
+ from social_uptake import main as analyze_social
+ analyze_social()

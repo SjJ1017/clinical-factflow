@@ -163,3 +163,98 @@ case-cluster weighting, mixed-panel eligibility, and different-seat role alignme
 All eight scatter-control variants and 32 correctness-control variants are checked
 alongside the original 324 UI configurations. Three exported scatter SVG panels
 were rasterized for visual inspection; no browser-policy workaround was used.
+
+## Outcome strata and majority/minority follow-up
+
+Run `scripts/study_report/social_uptake.py` after the previous analysis, then rebuild
+the HTML. `analyze.py` now includes this step automatically. The optional `report`
+dependency group adds SciPy for Student-t interval sensitivity. All matching and
+name labels are reused offline; no additional API charge or extraction occurs.
+Verify with `scripts/study_report/check_social.py` plus the existing JS check.
+
+The new section 07 contains separate controls for condition, S versus S+L grading,
+all/profession-tagged source facts, atom/equivalence units, matching direction and
+seven uptake/agreement outcomes. Its tables expose counts before pairing, paired
+panels/cases, recipient coverage, bootstrap CIs and t sensitivity CIs.
+
+### Definitions and identification limits
+
+- Source correctness is the source agent's diagnosis-name compatibility with the
+  reference. It does **not** label each source fact true or false. Default positive
+  is S+L, negative is D; U/abstention are excluded. S-only also excludes L.
+- Final outcome is the R3 reference-blind synonym-majority label. Final-compatible
+  and final-D strata are disjoint traces but can share a case across conditions.
+  The all-outcome stratum includes source contrasts with unresolved final grading.
+- Correct-minus-D contrasts compare source ratios within the same case, condition
+  and source round, then average those panel contrasts within case. Source group
+  means in these tables use precisely the same eligible panels. Only panels with
+  both groups identify a contrast; absence is NA, not zero.
+- Minority-minus-majority compares the single dissenting source with the mean of
+  the two agreeing sources. Exactly one of the three within-round diagnosis pairs
+  must be S. Three-way disagreement, unanimity and nontransitive label triples are
+  excluded. Reference labels never define majority membership.
+- Self uptake uses the source's own next output. Peer uptake averages the two
+  recipients within source. Cross-opinion uptake uses only recipients whose prior
+  diagnosis differs; it avoids counting a majority source's already-agreeing peer.
+  Previously unexpressed uptake excludes source units directly matched by the
+  recipient's prior output from both numerator and denominator. This measures new
+  expression, not whether a fact was unknown or absent from the recipient's context.
+- Next-diagnosis agreement is a separate name-level outcome, with self/peer/
+  cross-opinion variants. It is not causal copying. Use only identical names or
+  existing judged name pairs; unknown pairs remain NA, with coverage disclosed.
+  Fact-unit/matching/scope controls do not affect diagnosis-only results.
+- Each case, rather than each agent, fact, or trace, is an inference cluster. The
+  t sensitivity interval uses the SD of case-mean contrasts and n−1 degrees of
+  freedom. It is not clipped to parameter bounds and relies on a sampling model.
+  n<2 has no interval. Neither t nor nonparametric bootstrap is reliable population
+  evidence with only 2–3 cases. The final-outcome interaction uses joint case
+  resampling to preserve overlap between strata, not separate independent CIs.
+- Conditioning on a downstream final outcome can induce selection/collider
+  associations. A sign reversal cannot identify subjective belief as its cause.
+  Current majority is an observable agreement proxy, not a latent belief measure.
+  There are no eligible S+L-correct-minority versus two-D-majority panels in this
+  pilot at either source round, so the decisive truth-versus-majority conflict is
+  not identified. All three final-error mixed-correctness R1 panels are three-way
+  disagreements under the strict S-equivalence rule.
+
+### Results under default equivalence matching and all source facts
+
+All differences below are percentage points. Bootstrap intervals are case-level.
+
+- R1→R2, final-compatible runs: correct-minus-D self retention +12.21
+  [4.84,19.62], peers +8.99 [6.04,11.82], from 39 panels / 14 cases.
+- R1→R2, final-D runs: self −29.86 [−53.04,11.08], peers −9.42
+  [−14.29,−4.74], from only 3 panels / 3 cases. Peer t interval is
+  [−21.28,2.44]; the negative bootstrap interval must not be represented as robust
+  evidence. Restricting to profession-tagged facts gives −2.53 [−5.36,0.37].
+- R2→R3 has zero final-D panels containing both a compatible and a D source.
+  The sign reversal cannot be assessed again at this transition.
+- Overall strict 2:1 panels: R1 has 36 panels / 19 cases; R2 has 21 / 13.
+  Minority-minus-majority peer uptake is −3.93 [−8.54,0.51] at R1→R2 and
+  −7.08 [−10.32,−3.97] at R2→R3. The latter t interval is [−10.76,−3.40].
+  R2→R3 self retention is −13.11 [−18.85,−7.36].
+- At R2→R3, cross-opinion peer uptake is −6.90 [−11.07,−2.66]; previously
+  unexpressed uptake is −9.22 [−13.62,−4.89]; profession-tagged peer uptake is
+  −4.65 [−8.14,−1.08]. The minority disadvantage is not solely an already-agreeing
+  majority peer repeating shared content.
+- R2→R3 final-D 2:1 panels show the same direction: peer gap −5.70
+  [−14.25,3.92], 9 panels / 7 cases. This is directional but uncertain, and does
+  not imply that the minority was correct (that conflict is absent).
+- Among cross-opinion recipients, next-round diagnosis agreement favors majority
+  sources substantially: minority-minus-majority −49.34 [−76.97,−17.76] at
+  R1→R2 and −57.69 [−82.69,−30.77] at R2→R3. These are answer convergence
+  outcomes, not atomic-fact uptake. All selected 2:1 name comparisons are covered
+  by saved labels; no additional judging was needed.
+
+Treat intervals crossing zero with a directional mean as candidate effects for
+preregistered replication. More independent cases improve precision conditional on
+an effect persisting; 1k/10k traces or repeated draws from the same 24 cases cannot
+by themselves guarantee significance or resolve confounding. Do not extrapolate
+statistical significance as if the larger experiment had already been run.
+
+The ignored `social-uptake-observations.json` retains 240 source panels, 17,280
+source-recipient edges (including numerators, denominators and prior-expression
+status), and 40,320 source-level values across all metrics. Verification checks
+stratum partitions, n=0/n=1 intervals, majority membership, risk-set bounds,
+reproduction of earlier unstratified contrasts, and invariance of answer-only
+outcomes to fact settings. UI checks cover all 672 new control combinations.

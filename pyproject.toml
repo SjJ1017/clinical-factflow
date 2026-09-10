@@ -10,6 +10,7 @@ local = ["torch>=2.6", "transformers>=4.51,<5", "accelerate>=1.2", "sentence-tra
 quantized = ["bitsandbytes>=0.45"]
 parquet = ["pyarrow>=18"]
 dev = ["pytest>=8"]
+report = ["scipy>=1.11,<2"]
 
 [project.scripts]
 clinical-factflow = "clinical_factflow.cli:main"
