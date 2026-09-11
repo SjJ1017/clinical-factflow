@@ -401,3 +401,11 @@ The editable English deck is now 25 slides, `clinical-factflow-mentor-v6.pptx`.
 Page 2 highlights use 14% opacity; pages 19–25 contain the outcome audit. All
 original pages other than 2 match the v4 rendering. Do not overwrite finalized
 PPTX packages; regenerate to a new path. Files under findings remain local.
+
+
+Mentor deck v8 adds one editable five-condition graph page after the table (page 5).
+The deck has 26 pages; native chart owners are now 8/13/14 and the outcome audit
+is 20–26. Gray circles are generic roles; profession-colored circles are specialists.
+Dark satellites encode initial knowledge (three in Shared, one in Split). Mismatch
+is illustrated as a cyclic derangement; seats are illustrative. The prior 25 slides
+match v6 pixel-for-pixel. See `docs/medcase24-slides.md`.

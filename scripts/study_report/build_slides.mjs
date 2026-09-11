@@ -83,6 +83,46 @@ function gridAxis(s,x,y,w,h,xmin,xmax,ymin,ymax,xticks,yticks,xlabel='',ylabel='
  text(s,'24 cases × 5 settings = 120 traces',60,519,1100,47,34,ink,true);
  text(s,'3 agents   /   3 rounds   /   Full synchronous communication\nR2 and R3 receive both peers’ preceding output. Each agent answers every round.',60,579,1160,68,23);
 }
+// Experimental conditions: role nodes and initial-evidence satellites.
+{
+ const s=slide('Five experimental settings',
+  'Sources: configs/pilots/medcase24/*.yaml; docs/medcase24-pilot.md. Each graph shows three agents with full synchronous peer communication. Large nodes encode role prompts; dark satellite dots encode initial evidence partitions. Shared gives all three partitions to every agent; split gives one. The mismatched example uses a cyclic derangement; actual seats and derangements are counterbalanced across cases. Satellites describe initial evidence only, before peer communication.',
+  'All graphs use full synchronous communication. Small dots show initial evidence; seat positions are illustrative.');
+ const keys=Object.keys(C),dark=Object.fromEntries(keys.map(k=>[k,'#'+C[k].slice(1).match(/../g).map(v=>Math.round(parseInt(v,16)*.72).toString(16).padStart(2,'0')).join('')]));
+ text(s,'Large circles: role     Small solid dots: initial evidence',60,116,650,30,21,muted);
+ for(const [i,k] of keys.entries()){const x=740+i*166;dot(s,x,130,6,dark[k]);text(s,['Clinical','Lab / pathology','Imaging'][i],x+14,116,153,28,18,C[k],true);}
+ box(s,58,164,1164,233,'#f1f5f8');
+ box(s,58,414,1164,236,'#f3f7f4');
+ line(s,[[60,405],[1220,405]],'#b8c6cc',1.2);
+ text(s,'SHARED',78,251,158,38,27,ink,true);text(s,'All partitions\nto every agent',78,294,162,63,20,muted);
+ text(s,'SPLIT',78,502,150,38,27,ink,true);text(s,'One partition\nper agent',78,544,150,64,20,muted);
+ function setting(cx,top,title,generic,shared,mismatch=false){
+  text(s,title,cx-151,top,302,34,25,ink,true,'center');
+  const pos=[[cx,top+76],[cx-82,top+167],[cx+82,top+167]],r=33;
+  // Separate curved paths for both directed edges; arrow tips remain outside nodes.
+  for(let a=0;a<3;a++)for(let b=0;b<3;b++){if(a===b)continue;
+   const p=pos[a],q=pos[b],dx=q[0]-p[0],dy=q[1]-p[1],d=Math.hypot(dx,dy),ctrl=[(p[0]+q[0])/2-dy/d*22,(p[1]+q[1])/2+dx/d*22];
+   const at=(p,gap)=>{const dx=ctrl[0]-p[0],dy=ctrl[1]-p[1],d=Math.hypot(dx,dy);return [p[0]+dx/d*(r+gap),p[1]+dy/d*(r+gap)];};
+   const start=at(p,2),end=at(q,6),pts=Array.from({length:33},(_,i)=>{const t=i/32;return [(1-t)**2*start[0]+2*(1-t)*t*ctrl[0]+t*t*end[0],(1-t)**2*start[1]+2*(1-t)*t*ctrl[1]+t*t*end[1]];});
+   arrow(s,pts,'#657780',1.3);
+  }
+  for(let i=0;i<3;i++){
+   const [x,y]=pos[i],k=keys[i],col=generic?'#292f34':C[k];
+   box(s,x-r,y-r,r*2,r*2,generic?'#d8dce0':blend(C[k],.82),col,1.8,'ellipse');
+   const label=generic?'Generic':i===0?'Clinical':i===1?'Lab /\npath':'Imaging';
+   text(s,label,x-31,y-(i===1&&!generic?18:10),62,i===1&&!generic?39:26,i===1&&!generic?13:14,col,true,'center');
+   const side=i===1?-1:1,sx=x+side*52;
+   const evidence=shared?keys:[keys[mismatch?(i+1)%3:i]];
+   if(shared){[[sx,y-10],[sx-10,y+8],[sx+10,y+8]].forEach(([xx,yy],j)=>dot(s,xx,yy,7,dark[evidence[j]]));}
+   else dot(s,sx,y,8,dark[evidence[0]]);
+  }
+ }
+ setting(478,178,'Generic',true,true);
+ setting(985,178,'Specialist',false,true);
+ setting(385,427,'Generic',true,false);
+ setting(725,427,'Matching specialists',false,false);
+ setting(1065,427,'Mismatched specialists',false,false,true);
+}
 // 5. Editable pipeline diagram with first-stage negative labels.
 {
  const s=slide('Atomic facts and relation labels','Sources: configs/extraction/minimax-m3-speed-v4.yaml; docs/server-matching.md. Actual extraction MiniMax M3 with thinking disabled, candidate-only atomization. BGE and lexical blocker 0.62 top-12; Qwen3-14B directional YES/NO margins; threshold 5.28. Blocker negatives are UNRELATED labels, equal in status to NLI negatives.','Each initial source and each output is processed separately. The extractor never receives a bundled prior conversation or the answer key.');
@@ -267,5 +307,5 @@ for(let i=0;i<P.slides.items.length;i++){
  const layout=await s.export({format:'layout'});await fs.writeFile(path.join(build,'preview',String(i+1).padStart(2,'0')+'.layout.json'),await layout.text());console.log('Rendered',i+1);
 }
 await fs.mkdir(path.join(root,'findings/medcase24-validation'),{recursive:true});
-const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v6.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[7,12,13],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v6.json')});
+const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v8.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[8,13,14],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v8.json')});
 console.log(JSON.stringify(result));

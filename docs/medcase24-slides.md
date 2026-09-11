@@ -1,7 +1,7 @@
 # MedCase24 mentor slides
 
-The English 25-slide deck is generated locally at
-`findings/medcase24-slides/clinical-factflow-mentor-v6.pptx`.
+The English 26-slide deck is generated locally at
+`findings/medcase24-slides/clinical-factflow-mentor-v8.pptx`.
 It covers ClinicalBench's public example, the actual MedCaseReasoning case and
 partitions, controlled conditions, extraction/matching, trace links, aggregate
 flow, and selected results. ClinicalBench is not presented as the pilot corpus.
@@ -93,3 +93,20 @@ pixel-for-pixel. Structural checks found no warnings; all slides contain native
 text/shapes, with no raster picture objects. Statistical checks independently
 reproduced the coverage coefficient with full dummy-variable OLS and verified
 held-out Brier arithmetic. These checks do not establish causal validity.
+
+
+## Five-condition diagram (v8)
+
+A new page 5 follows the experimental-setting table. The top row shows two Shared
+conditions; the bottom row shows three Split conditions on a separate background.
+Large circles encode role prompts (gray/black generic, profession colors for
+specialists); darker satellite dots encode initial evidence partitions. Shared
+satellites form three-color triangles; Split has one colored dot per agent.
+The mismatched example gives each specialist another profession's partition.
+Positions illustrate the design, not the actual counterbalanced seat assignment.
+Each graph has six curved directed peer arrows with tips outside node boundaries.
+
+The deck now has 26 pages. Subsequent page numbers shift by one, so the outcome
+audit occupies pages 20–26 and native charts reside on pages 8, 13 and 14.
+The finalized v8 deck was rendered and checked: all 25 previous slides are
+pixel-identical to v6; the added page contains native editable shapes and text.
