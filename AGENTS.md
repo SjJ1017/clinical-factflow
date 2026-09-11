@@ -302,3 +302,25 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - Rebuild now: `analyze.py` includes followup and social analysis; use optional
   `report` dependencies for SciPy. `check_social.py` adds denominator/strata/CI
   checks; `check.cjs` adds 672 social-control combinations.
+
+## 2026-09-11: Python PDF figure set
+
+- `scripts/study_report/export_figures.py` produces 20 vector PDFs under ignored
+  `findings/medcase24-figures/`: 27-page master, 7 figure-family PDFs and 12 single
+  source-prime heatmaps. `check_figures.py` verifies values, vector-only output,
+  text bounds and packages the ZIP. Methods: `docs/medcase24-figures.md`.
+- Token clock uses cached BGE tokenizer and UTF-16-aware supporting-span **ends**
+  (old clock used starts); missing spans fall back to turn end. 36,192 located,
+  472 fallbacks. No billed/reasoning tokens. All 480 prefix/round endpoints match
+  old equivalence-component counts. Mean curves keep 24 cases at common budgets;
+  show full individual trajectories separately, without survivor-only means.
+- PDF source scatters plot individual edges but bootstrap cases after averaging
+  peer edges within source and sources within panel. Correctness figures include
+  matched-panel and all-source versions; do not conflate their populations.
+- Marginal correctness × majority grids contain correct-minority observations
+  (3 cases at R1, 2 at R2). The previously absent criterion is correct minority
+  **against two D majority agents**, a joint-panel condition. Do not mistakenly
+  erase correct-minority marginal cells. Mark n<5 and NA cells explicitly.
+- HTML source diagrams are now prime heatmaps (receiver-relative categories), with
+  an equal-setting average. Scatter setting labels appear only in the left panel.
+  Existing controls still work; tests assert heatmap cell counts rather than arrows.

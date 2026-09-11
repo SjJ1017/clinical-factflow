@@ -24,7 +24,8 @@ console.log(JSON.stringify({controlConfigurationsChecked:changes,accuracyGroups:
 `,context);
 for(let [id,el] of elements){assert(!el.innerHTML.includes('NaN'),id+' NaN');assert(!el.innerHTML.includes('undefined'),id+' undefined')}
 for(const [i,svg] of [...get('graphPanels').innerHTML.matchAll(/<svg[\s\S]*?<\/svg>/g)].entries())fs.writeFileSync('/tmp/medcase-graph-'+i+'.svg',svg[0]);
-assert.equal([...get('graphPanels').innerHTML.matchAll(/marker-end=/g)].length,18);
+assert.equal([...get('graphPanels').innerHTML.matchAll(/class="heat-cell"/g)].length,18);
+assert.equal([...get('graphPanels').innerHTML.matchAll(/marker-end=/g)].length,0);
 fs.writeFileSync('/tmp/medcase-accuracy.svg',get('agentAccuracy').innerHTML.replace(/class="annotation"/g,'font-size="11" fill="#687b80"'));
 vm.runInContext(`
 for(const unit of ['equivalence','atoms'])for(const scheme of ['fractional','inclusive'])for(const match of ['equivalence','entailment']){
