@@ -9,10 +9,10 @@ revision audit automatically. It makes no API calls and changes no saved labels.
 
 | PDF | Pages | Content |
 |---|---:|---|
-| 00_all_figures.pdf | 22 | Combined collection |
+| 00_all_figures.pdf | 19 | Combined collection |
 | 01_uptake_prime.pdf | 1 | R1–R3, paired setting backgrounds and profession-mean connectors |
 | 02_output_preference.pdf | 2 | All output facts: own share, then own minus other share |
-| 03_facts_by_output_tokens.pdf | 4 | Cumulative R1–R3 and each round separately |
+| 03_facts_by_output_tokens.pdf | 1 | Cumulative left; R1/R2/R3 and within-case round mean in a right 2×2 grid |
 | 04_source_uptake_heatmaps.pdf | 2 | Five settings + equal setting mean per transition |
 | 05_correctness_and_final_outcome.pdf | 2 | Pooled transitions: scatter, then boxplot |
 | 06_majority_advantage.pdf | 2 | Pooled transitions: scatter, then boxplot |
@@ -20,7 +20,9 @@ revision audit automatically. It makes no API calls and changes no saved labels.
 | 08_new_fact_preference.pdf | 4 | New-output own share/prime, novelty beyond initial evidence, new-vs-old interaction |
 | 09_paired_role_contrasts.pdf | 3 | Specialist − generic within case, separately for shared/split information |
 
-Twelve additional PDFs contain individual 3×3 source heatmaps. All plots are
+The master groups all preference figures first: 01, 02, 08, 09, followed by 03–07.
+New-output preference starts on master page 4. The former three separate round-only
+token pages are removed. Twelve additional PDFs contain individual 3×3 source heatmaps. All plots are
 English vector graphics with embedded fonts. The ZIP includes PDFs, numerical
 points, cached token clocks, audit data, methods and the four figure scripts;
 rebuilding also requires the analysis modules and saved study data in the project.
@@ -43,7 +45,10 @@ but neither own nor other numerators. Uptake prime instead subtracts two uptake
 rates with separate own/other source denominators. Undefined ratios stay missing.
 
 Generic and specialist conditions are visually paired using background bands and
-profession-mean connectors. Summary markers distinguish generic (circle), specialist
+profession-mean connectors. Other adjacent condition rows have dashed connectors;
+the same connections include black overall means. Every profile row prints the
+black case-mean value at right (percent for shares, percentage points for primes).
+Summary markers distinguish generic (circle), specialist
 (diamond) and mismatch (triangle). The supplementary paired-effect pages subtract
 generic from specialist within the same case and information allocation; zero is
 therefore the direct role-effect reference, unlike the raw profile levels.
@@ -75,9 +80,12 @@ ordered by round, then A/B/C solely for accounting, not causal transmission.
 
 Each curve counts components among output atoms seen **so far**. Later nodes may
 bridge components, allowing decreases. Round-only curves reset the graph. All 480
-endpoints reproduce saved fact totals. Mean curves share the minimum complete token
-budget across all 120 traces; full individual trajectories show the remaining range
-without extrapolation or changing sample composition.
+endpoints reproduce saved fact totals. The cumulative mean curve shares the minimum complete token budget across all
+120 traces. The four right panels share the minimum within-round token budget
+across 120 traces × 3 rounds. The mean-round panel first takes the arithmetic mean
+of a case's R1/R2/R3 curves at the same within-round token position, then averages
+cases, bootstrapping cases jointly across rounds. It never merges facts across
+rounds. No individual trajectories are plotted and there is no extrapolation.
 
 For each trace the audit exactly decomposes:
 
@@ -108,6 +116,15 @@ whose facts are offered for uptake (correct / incorrect). Correct = S+L, incorre
 = D. Unclassified source or final outcomes are excluded from these colored plots.
 Majority comparisons use strict 2:1 panels, with majority/minority shown as two
 bands or two boxplot groups; shapes still denote source correctness in scatter.
+
+Scatter summary rows are ordered by final outcome: correct-source / incorrect-source
+within final-correct first, then the same groups within final-incorrect. Green/red
+bands mark those two final-outcome groups. Majority pages follow the same ordering.
+
+Boxplots use a 2×3 layout: self retention / peer uptake on rows, and all classified
+finals / final correct / final incorrect on columns. The all-finals column shows
+both colored strata side by side; the right columns repeat the individual strata
+and retain the existing paired tests. It introduces no new significance tests.
 
 Dots are source-recipient edges. Summary statistics first average recipients
 within source, sources within case-condition-round groups, rounds within condition,

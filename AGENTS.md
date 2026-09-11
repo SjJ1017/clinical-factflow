@@ -346,3 +346,15 @@ share. Clinical's raw negative prime is not an opposite specialist effect: R3
 specialist−generic uptake-prime differences are positive for all professions.
 Details and exact definitions: `docs/medcase24-figures.md`. Outputs remain ignored;
 regenerate locally, no API. PDF verification checks counts, bounds and vectors.
+
+
+## PDF annotation follow-up
+
+The master is now 19 pages (22 exported PDF files), ordered 01,02,08,09,03–07.
+Profiles have dashed connectors between remaining adjacent setting rows and
+printed black case-mean values. Token clock is one page: cumulative left,
+R1/R2/R3 and their within-case curve mean right. All four right panels use the
+same within-round common token budget; the round mean does not merge across rounds.
+Scatter summaries group by final outcome with colored bands. Boxplots use 2×3
+self/peer × all/final-correct/final-incorrect panels. The all column repeats the
+colored strata, not an additional independent sample. Existing tests remain.

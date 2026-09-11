@@ -64,9 +64,13 @@ def profile_fig(rows,metric,title,path,percent=False):
         # Pair adjacent generic/specialist settings visually; connectors join profession means.
         for low,high,shade in [(0,1,'#edf3f8'),(2,3,'#edf6f2')]:
             ax.axhspan(low-.45,high+.55,color=shade,zorder=0)
-            for j,f in enumerate(FIELDS):
-                ms=[stats([r for r in rows if r['condition']==CONDS[q] and r['round']==rd and r['field']==f],metric)['mean'] for q in [low,high]]
-                if all(v is not None for v in ms):ax.plot(ms,[low+.29+j*.073,high+.29+j*.073],color=FC[f],alpha=.35,lw=1,zorder=1)
+            for j,f in enumerate(FIELDS+['all']):
+                ms=[stats([r for r in rows if r['condition']==CONDS[q] and r['round']==rd and (f=='all' or r['field']==f)],metric)['mean'] for q in [low,high]]
+                if all(v is not None for v in ms):ax.plot(ms,[low+.29+j*.073,high+.29+j*.073],color=FC.get(f,'#223c43'),alpha=.35,lw=1,zorder=1)
+        for low,high in [(1,2),(3,4)]:
+            for j,f in enumerate(FIELDS+['all']):
+                ms=[stats([r for r in rows if r['condition']==CONDS[q] and r['round']==rd and (f=='all' or r['field']==f)],metric)['mean'] for q in [low,high]]
+                if all(v is not None for v in ms):ax.plot(ms,[low+.29+j*.073,high+.29+j*.073],color=FC.get(f,'#223c43'),alpha=.5,lw=1,ls=(0,(3,3)),zorder=1)
         for i,c in enumerate(CONDS):
             ps=[r for r in rows if r['condition']==c and r['round']==rd]
             assert len(ps)==72
@@ -77,12 +81,15 @@ def profile_fig(rows,metric,title,path,percent=False):
                 if st['mean'] is not None:
                     if st['lo'] is not None:ax.plot([st['lo'],st['hi']],[y,y],color=color,lw=1.5)
                     ax.scatter(st['mean'],y,marker=('o' if c.endswith('generic') else '^' if c.endswith('mismatched') else 'D'),s=24,color=color,zorder=3)
+                if f=='all':
+                    label='Mean NA' if st['mean'] is None else (f"Mean {100*st['mean']:.1f}%" if percent else f"Mean {100*st['mean']:+.1f} pp")
+                    ax.text(.98,i+.05,label,ha='right',va='center',fontsize=8,color='#223c43',transform=ax.get_yaxis_transform(),bbox={'facecolor':'white','alpha':.8,'edgecolor':'none','pad':1.2})
                 summary.append({'condition':c,'round':rd,'field':f,'metric':metric,**st})
             missing=sum(r[metric] is None for r in ps)
             ax.text(.98,i-.29,f'{72-missing}/72'+(f'  |  NA {missing}' if missing else ''),ha='right',va='center',fontsize=7.5,color='#6b7b80',transform=ax.get_yaxis_transform())
         ax.set_ylim(4.85,-.55);ax.set_yticks(range(5));ax.tick_params(axis='y',length=0,pad=15);ax.xaxis.set_major_formatter(PercentFormatter(1,decimals=0));ax.set_xlim((0,1) if percent else (-1,1));ax.set_xticks([0,.25,.5,.75,1] if percent else [-1,-.5,0,.5,1]);ax.set_xlabel('Own-profession output share' if percent else ('Own - other output share' if metric=='output_prime' else 'Own - other uptake rate'))
     axes[0].set_yticklabels([CN[c] for c in CONDS],fontweight='normal')
-    foot(fig,'Dots: case-agent ratios; summary circles = generic, diamonds = specialist, triangles = mismatch. Bars: 95% case-bootstrap CI.\nShaded pairs and connectors compare generic / specialist under the same information setting. Undefined ratios are omitted.')
+    foot(fig,'Dots: case-agent ratios; summary circles = generic, diamonds = specialist, triangles = mismatch. Bars: 95% case-bootstrap CI.\nSolid: generic / specialist within an information setting. Dashed: other adjacent settings. Right labels: black overall means.')
     DETAILS[path.stem]={'metric':metric,'algorithm':BASE,'summary':summary,'points':[{k:r[k] for k in ['case','condition','round','seat','field',metric]} for r in rows]}
     return fig
 
@@ -133,25 +140,31 @@ def token_data(runs):
             results.append({'case':run['case'],'condition':run['condition'],'round':rd,'tokens':total,'trajectory':trajectory,'events':events})
     result={'signature':signature,'located_mentions':matched,'fallback_mentions':unlocated,'runs':results};cache.write_text(json.dumps(result,separators=(',',':')));return result
 
-def token_fig(td,rd):
-    rs=[r for r in td['runs'] if r['round']==rd];common=min(r['tokens'] for r in rs);grid=np.linspace(0,common,180)
-    fig,axes=plt.subplots(1,2,figsize=(13.5,6.5));fig.subplots_adjust(top=.81,bottom=.18,left=.075,right=.985,wspace=.21)
-    fig.suptitle('Distinct output facts along the token clock'+(' - R1 to R3' if rd==0 else f' - R{rd} only'),fontsize=16,y=.98)
-    fig.legend(handles=[Line2D([],[],color=CC[c],label=CN[c],lw=2) for c in CONDS],ncol=5,loc='upper center',bbox_to_anchor=(.5,.926),frameon=False)
-    rows=[]
-    for c in CONDS:
-        cs=[r for r in rs if r['condition']==c];ys=[]
-        for r in cs:
-            a=np.asarray(r['trajectory']);v=a[np.searchsorted(a[:,0],grid,side='right')-1,1];ys.append(v)
-            axes[1].step(a[:,0],a[:,1],where='post',color=CC[c],alpha=.17,lw=.6)
-            axes[1].scatter(a[-1,0],a[-1,1],color=CC[c],s=10,alpha=.55)
-        a=np.asarray(ys);boot=a[np.random.default_rng(20260910).integers(0,24,(2000,24))].mean(axis=1);mean=a.mean(axis=0);lo,hi=np.quantile(boot,[.025,.975],axis=0)
-        axes[0].plot(grid,mean,color=CC[c],lw=2,label=CN[c]);axes[0].fill_between(grid,lo,hi,color=CC[c],alpha=.10)
-        rows.append({'condition':c,'round':rd,'tokens':grid.tolist(),'mean':mean.tolist(),'lo':lo.tolist(),'hi':hi.tolist()})
-    axes[0].set_title('Same token budget: 24 cases per setting');axes[1].set_title('Complete individual trajectories: 120 traces')
-    for ax in axes:ax.set_xlabel('Estimated visible output tokens');ax.set_ylabel('Distinct facts (equivalence components)');ax.grid(alpha=.17);ax.set_ylim(bottom=0);ax.set_xlim(left=0)
-    foot(fig,'BAAI/bge-base-en-v1.5 tokenizer; quote-end positions; output only. Left: common support, no extrapolation.\nParallel turns ordered by round, then A/B/C for accounting. Components may merge as new nodes appear.')
-    DETAILS[f'token-R{rd}']=rows
+def token_fig(td):
+    fig=plt.figure(figsize=(15,8));gs=fig.add_gridspec(2,3,width_ratios=[1.8,1,1],left=.065,right=.98,top=.84,bottom=.16,wspace=.32,hspace=.48)
+    left=fig.add_subplot(gs[:,0]);small=[fig.add_subplot(gs[i,j]) for i,j in [(0,1),(0,2),(1,1),(1,2)]]
+    fig.suptitle('Distinct output facts along the token clock',fontsize=16,y=.98)
+    fig.legend(handles=[Line2D([],[],color=CC[c],label=CN[c],lw=2) for c in CONDS],ncol=5,loc='upper center',bbox_to_anchor=(.5,.93),frameon=False)
+    lookup={(r['case'],r['condition'],r['round']):r for r in td['runs']}
+    round_common=min(r['tokens'] for r in td['runs'] if r['round'] in [1,2,3])
+    def curve(r,grid):
+        a=np.asarray(r['trajectory']);return a[np.searchsorted(a[:,0],grid,side='right')-1,1]
+    for ax,rd,title in [(left,0,'Cumulative R1-R3'),*[(a,r,f'R{r} only') for a,r in zip(small[:3],[1,2,3])],(small[3],-1,'Mean of R1, R2 and R3')]:
+        common=min(r['tokens'] for r in td['runs'] if r['round']==0) if rd==0 else round_common
+        grid=np.linspace(0,common,180);records=[]
+        for c in CONDS:
+            cases=sorted({r['case'] for r in td['runs'] if r['condition']==c})
+            a=np.asarray([np.mean([curve(lookup[cid,c,q],grid) for q in [1,2,3]],axis=0) if rd==-1 else curve(lookup[cid,c,rd],grid) for cid in cases])
+            boot=a[np.random.default_rng(20260910).integers(0,len(cases),(2000,len(cases)))].mean(axis=1)
+            mean=a.mean(axis=0);lo,hi=np.quantile(boot,[.025,.975],axis=0)
+            ax.plot(grid,mean,color=CC[c],lw=2 if rd==0 else 1.5);ax.fill_between(grid,lo,hi,color=CC[c],alpha=.10)
+            records.append({'condition':c,'round':rd,'tokens':grid.tolist(),'mean':mean.tolist(),'lo':lo.tolist(),'hi':hi.tolist(),'cases':cases,'case_curves':a.tolist()})
+        DETAILS[f'token-R{rd}']=records
+        ax.set_title(title,fontsize=12);ax.grid(alpha=.17);ax.set_xlim(0,common);ax.set_ylim(bottom=0);ax.set_xlabel('Cumulative output tokens' if rd==0 else 'Output tokens within round',fontsize=9);ax.tick_params(labelsize=8)
+        if rd in [0,1,3]:ax.set_ylabel('Distinct facts',fontsize=9)
+    ymax=max(ax.get_ylim()[1] for ax in small)
+    for ax in small:ax.set_ylim(0,ymax)
+    foot(fig,'24 cases per setting; mean and 95% case-bootstrap CI. Left: cross-round equivalence merging. Right: each round resets the fact graph.\nRight panels share one within-round token budget; bottom right averages the three round curves within case, without cross-round merging.\nBAAI/bge-base-en-v1.5 tokenizer; quote-end positions; visible output only. No individual trajectories or extrapolation.')
     return fig
 
 def flow_figs(raw):
@@ -210,7 +223,7 @@ def main():
     for r in td['runs']:
         old=next(x for x in O['counts'] if x['case']==r['case'] and x['condition']==r['condition'] and x['round']==r['round'] and x['scope']==('trace' if r['round']==0 else 'round') and x['mode']=='equivalence');assert old['facts']==r['trajectory'][-1][1]
     with PdfPages(OUT/'03_facts_by_output_tokens.pdf') as pdf:
-        for rd in [0,1,2,3]:f=token_fig(td,rd);pdf.savefig(vectorize(f));plt.close(f)
+        f=token_fig(td);pdf.savefig(vectorize(f));plt.close(f)
     FIGS.append(OUT/'03_facts_by_output_tokens.pdf');flow_figs(O)
     import sys
     from pooled_figures import export
@@ -218,13 +231,13 @@ def main():
     revise()
     revision=json.loads((OUT/'revision-analysis.json').read_text())
     export(sys.modules[__name__],revision,profiles)
-    primary=sorted([p for p in FIGS if p.name[:3] in [f'{i:02d}_' for i in range(1,10)] and not p.name.startswith('04_R')])
+    primary=[next(p for p in FIGS if p.name.startswith(f'{i:02d}_') and not p.name.startswith('04_R')) for i in [1,2,8,9,3,4,5,6,7]]
     writer=PdfWriter()
     for p in primary:writer.append(p)
     with (OUT/'00_all_figures.pdf').open('wb') as f:writer.write(f)
     FIGS.append(OUT/'00_all_figures.pdf')
-    AUDIT['pdfs']={p.name:len(PdfReader(p).pages) for p in sorted(FIGS)};AUDIT['figure_count']=len(FIGS)
-    assert len(FIGS)==22 and len(PdfReader(OUT/'00_all_figures.pdf').pages)==22
+    AUDIT['pdfs']={p.name:len(PdfReader(p).pages) for p in sorted(FIGS)};AUDIT['figure_count']=len(FIGS);AUDIT['master_order']=[p.name for p in primary]
+    assert len(FIGS)==22 and len(PdfReader(OUT/'00_all_figures.pdf').pages)==19
     (OUT/'figure-data.json').write_text(json.dumps(DETAILS,separators=(',',':'),allow_nan=False));(OUT/'audit.json').write_text(json.dumps(AUDIT,indent=2))
     print(json.dumps({'pdfs':AUDIT['pdfs'],'token_clock':AUDIT['token_clock']},indent=2))
 if __name__=='__main__':main()

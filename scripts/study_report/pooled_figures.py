@@ -12,7 +12,7 @@ MARK={'Correct':'o','Incorrect':'^'}
 
 def cells(es,key):
     labels=['Correct','Incorrect'] if key=='truth' else ['Majority','Minority']
-    return [(g,f,[e for e in es if e[key]==g and e['final']==f]) for g in labels for f in FINAL]
+    return [(g,f,[e for e in es if e[key]==g and e['final']==f]) for f in FINAL for g in labels]
 
 def fmt(x):return 'NA' if x is None else ('<0.001' if x<.001 else f'{x:.3f}')
 def p_label(name,x):return name+('<0.001' if x is not None and x<.001 else '='+fmt(x))
@@ -23,6 +23,7 @@ def test_text(t):
     return f"Final {t['final'].lower()}: Δ {100*s['mean']:+.1f} pp, {ci}; n={s['n']}, {p_label('p',t['p'])}, {p_label('q',t['q'])}"
 
 def source_figure(E,R,kind,version):
+    if version=='boxplot':return boxplot_grid(E,R,kind)
     key='truth' if kind=='correctness' else 'status'
     edges=[e for e in R['pooled_edges'] if kind=='correctness' or e['panel_kind']=='two_one']
     fig,axes=plt.subplots(2,1,figsize=(13.6,9.5));fig.subplots_adjust(left=.17,right=.98,top=.84,bottom=.22,hspace=.76)
@@ -46,6 +47,7 @@ def source_figure(E,R,kind,version):
                 ax.scatter(e['rate'],y+E.jitter((e['case'],e['condition'],e['round'],e['seat'],e['target']),.26),s=19,c=FINAL[e['final']],marker=MARK[e['truth']],alpha=.43,linewidths=0)
             start=.64 if kind=='correctness' else 1.45
             ticks=([0] if kind=='correctness' else [0,.85]);labs=(['All source edges'] if kind=='correctness' else ['Majority edges','Minority edges'])
+            for k,f in enumerate(FINAL):ax.axhspan(start+k*.5-.115,start+k*.5+.375,color=FINAL[f],alpha=.075,zorder=0)
             for i,(g,f,rs,cv,s) in enumerate(summaries):
                 y=start+i*.25;ticks.append(y);labs.append(f'{g} / final {f.lower()}  (n={s["n"]})')
                 if s['mean'] is not None:
@@ -66,6 +68,41 @@ def source_figure(E,R,kind,version):
         for j,t in enumerate(ts):ax.text(0,-.32-j*.10,test_text(t),transform=ax.transAxes,fontsize=8.2,color=FINAL[t['final']])
     E.foot(fig,('Dots: individual edges; summary markers: case means and 95% case-bootstrap CI.' if version=='scatter' else 'Boxes: case means, median and IQR; whiskers: 1.5 IQR. Diamonds / bars: mean / 95% case-bootstrap CI.')+'\nΔ: within-panel '+('correct − incorrect' if kind=='correctness' else 'minority − majority')+'; equal weight per case. p: case sign-flip; q: BH across 8 planned tests. Final = R3 system answer.\nR1→R2 and R2→R3 pooled. Correct = exact or accepted hierarchy (S+L); incorrect = D; unclassified excluded. n in rows = cases; n in tests = paired cases.')
     E.DETAILS[f'{kind}-pooled-{version}']=records
+    return fig
+
+def boxplot_grid(E,R,kind):
+    key='truth' if kind=='correctness' else 'status';labels=['Correct','Incorrect'] if key=='truth' else ['Majority','Minority']
+    edges=[e for e in R['pooled_edges'] if kind=='correctness' or e['panel_kind']=='two_one']
+    fig,axes=plt.subplots(2,3,figsize=(14.4,9.2),sharey=True)
+    fig.subplots_adjust(left=.07,right=.985,top=.82,bottom=.23,wspace=.24,hspace=.71)
+    title='Source diagnosis and later fact uptake' if kind=='correctness' else 'Majority status and later fact uptake'
+    fig.suptitle(title+' - pooled transitions',fontsize=16,y=.98)
+    fig.legend(handles=[Line2D([],[],marker='s',ls='',color=c,label='Final '+f.lower()) for f,c in FINAL.items()],loc='upper center',bbox_to_anchor=(.5,.935),ncol=2,frameon=False)
+    records=[]
+    for i,receiver in enumerate(['self','peers']):
+        for j,outcome in enumerate(['All','Correct','Incorrect']):
+            ax=axes[i,j];es=[e for e in edges if (e['seat']==e['target'])==(receiver=='self') and e['rate'] is not None and (outcome=='All' or e['final']==outcome)]
+            ax.set_title('All classified finals' if outcome=='All' else 'Final '+outcome.lower(),fontweight='bold',color=FINAL.get(outcome,'#243b43'),pad=15)
+            if outcome!='All':ax.set_facecolor(FINAL[outcome]+'0c')
+            for g,f,rs in cells(es,key):
+                if outcome!='All' and f!=outcome:continue
+                cv=case_values(rs);st=stat(list(cv.values()));records.append({'panel':outcome,'receiver':receiver,'group':g,'final':f,'stat':st,'case_values':cv,'edges':len(rs)})
+                x=labels.index(g)+((-.19 if f=='Correct' else .19) if outcome=='All' else 0)
+                if cv:
+                    ax.boxplot(list(cv.values()),positions=[x],widths=.27 if outcome=='All' else .43,patch_artist=True,manage_ticks=False,boxprops={'facecolor':FINAL[f]+'40','edgecolor':FINAL[f]},medianprops={'color':FINAL[f],'linewidth':2},whiskerprops={'color':FINAL[f]},capprops={'color':FINAL[f]},flierprops={'marker':'.','markersize':3,'markeredgecolor':FINAL[f]})
+                    if st['lo'] is not None:ax.plot([x,x],[st['lo'],st['hi']],color=FINAL[f],lw=1.6)
+                    ax.scatter(x,st['mean'],color=FINAL[f],marker='D',s=26,zorder=4)
+                ax.text(x,1.025,f"n={st['n']}",ha='center',va='bottom',fontsize=8,color=FINAL[f])
+            ax.set_xticks([0,1],labels);ax.set_xlabel('Source diagnosis' if key=='truth' else 'Source majority status',fontsize=9);ax.set_xlim(-.55,1.55);ax.set_ylim(-.02,1.10);ax.set_yticks([0,.25,.5,.75,1]);ax.yaxis.set_major_formatter(PercentFormatter(1));ax.grid(axis='y',alpha=.17)
+            if j==0:ax.set_ylabel('Self-retention rate' if receiver=='self' else 'Peer uptake rate',fontweight='bold')
+            if outcome=='All':
+                ax.text(.5,-.24,'Final groups are shown together;\nstratified paired tests appear at right.',transform=ax.transAxes,ha='center',va='top',fontsize=8,color='#52646a')
+            else:
+                t=next(t for t in R['pooled_tests'] if t['kind']==kind and t['receiver']==receiver and t['final']==outcome);st=t['effect']
+                txt='No paired panels' if st['mean'] is None else f"Δ {100*st['mean']:+.1f} pp; paired n={st['n']}\n95% CI [{100*st['lo']:+.1f}, {100*st['hi']:+.1f}] pp\n{p_label('p',t['p'])}; {p_label('q',t['q'])}"
+                ax.text(.5,-.24,txt,transform=ax.transAxes,ha='center',va='top',fontsize=8.4,color=FINAL[outcome])
+    E.foot(fig,'Boxes: case means; median and IQR; whiskers: 1.5 IQR. Diamonds / bars: mean / 95% case-bootstrap CI. All-final column repeats the two strata.\nΔ: paired within-panel '+('correct - incorrect' if kind=='correctness' else 'minority - majority')+'; p: case sign-flip; q: BH across 8 tests. Final = R3 system answer.\nR1-R2 and R2-R3 pooled. Correct = S+L, incorrect = D. Unclassified excluded. Box n = cases; test n = paired cases.')
+    E.DETAILS[f'{kind}-pooled-boxplot']=records
     return fig
 
 def factorial(E,R,receiver):
