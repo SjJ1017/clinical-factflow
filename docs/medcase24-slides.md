@@ -1,7 +1,7 @@
 # MedCase24 mentor slides
 
 The English 18-slide deck is generated locally at
-`findings/medcase24-slides/clinical-factflow-mentor-v3.pptx`.
+`findings/medcase24-slides/clinical-factflow-mentor-v4.pptx`.
 It covers ClinicalBench's public example, the actual MedCaseReasoning case and
 partitions, controlled conditions, extraction/matching, trace links, aggregate
 flow, and selected results. ClinicalBench is not presented as the pilot corpus.
@@ -54,3 +54,13 @@ The selected trace links are verified against both saved direct-equivalence scor
 and receiving-card visibility. Graph arrows represent possible transmission, not
 proof of copying. Case-paired inference uses 24 independent cases, never 120 traces
 or individual edges as independent patients.
+
+## Annotated slide refinements
+
+Slide 2 preserves the full original paragraph and marks source-partition spans with
+8%-opacity clinical/lab/imaging frames, using rendered line breaks and Arial font
+advances. Frames remain separate editable shapes. Slide 6 uses circular nodes and
+curved directed paths, with arrow tips outside the node boundary. Slide 7 adds the
+saved pointwise 95% case-bootstrap intervals (2,000 resamples, 24 cases). Its CI
+bands are editable polygons behind transparent native charts. Update the bands
+when changing chart data or geometry; they are not linked Excel error bands.

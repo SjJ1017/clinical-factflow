@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import {createCanvas,GlobalFonts} from '@napi-rs/canvas';
 import {Presentation,PresentationFile} from '@oai/artifact-tool';
 const root=path.resolve(process.env.FACTFLOW_ROOT ?? process.cwd());
 const build=path.join(root,'findings/medcase24-slides/build');
@@ -47,7 +48,23 @@ function gridAxis(s,x,y,w,h,xmin,xmax,ymin,ymax,xticks,yticks,xlabel='',ylabel='
 {
  const s=slide('MedCaseReasoning: the actual pilot dataset','Source: local data/medcasereasoning/pilot24/cases.jsonl, '+E.case.id+'. Official dataset https://huggingface.co/datasets/zou-lab/MedCaseReasoning, revision 469a536, train row 423. This slide displays the full case_prompt from frozen source spans. Line breaks are adjusted for display. Reference diagnosis and reasoning never enter agent inputs.','24 selected cases with substantial evidence in all three partitions. This is a feasibility sample, not a population estimate.');
  text(s,'Original case_prompt',60,125,620,34,28,ink,true);text(s,'PMC3420544   /   216 words',820,131,400,28,20,muted,false,'right');
- const raw=E.case.evidence.map(e=>e.text).join('').replace(/\s+/g,' ').trim();text(s,raw,62,184,1154,386,24);
+ const raw=E.case.evidence.map(e=>e.text).join('').replace(/\s+/g,' ').trim();const body=text(s,raw,62,184,1154,386,24);
+ // Use the rendered line breaks and exact font advances to mark source partitions.
+ GlobalFonts.registerFromPath('/System/Library/Fonts/Supplemental/Arial.ttf','CaseArial');
+ const ctx=createCanvas(1,1).getContext('2d');ctx.font='24px CaseArial';
+ const layout=JSON.parse(await (await s.export({format:'layout'})).text());
+ const lines=layout.elements.find(e=>e.text===raw).textLayout.lines;
+ let offset=0;const spans=E.case.evidence.map(e=>{const t=e.text.replace(/\s+/g,' ').trim(),start=raw.indexOf(t,offset);if(start<0)throw new Error('Case span missing');offset=start+t.length;return {start,end:offset,category:e.category};});
+ offset=0;for(const [i,l] of lines.entries()){
+  const start=raw.indexOf(l.text,offset);if(start<0)throw new Error('Rendered line missing');offset=start+l.text.length;
+  for(const sp of spans){const a=Math.max(start,sp.start),b=Math.min(offset,sp.end);if(a>=b)continue;
+   const x=62+ctx.measureText(raw.slice(start,a)).width,w=ctx.measureText(raw.slice(a,b)).width;
+   box(s,x-1,187+i*28.8,w+2,27.6,C[sp.category]+'/8',C[sp.category]+'/22',.6);
+  }
+ }
+ body.bringToFront();
+ for(const [i,k] of Object.keys(C).entries()){const x=470+i*247;box(s,x,162,17,13,C[k]+'/8',C[k]+'/25',.7);text(s,N[k],x+24,159,235,23,16,muted);}
+
  line(s,[[62,589],[1218,589]],rule,1);text(s,'Reference held out from agents',62,614,370,32,21,muted);text(s,'Chronic recurrent multifocal osteomyelitis',450,610,765,42,27,ink,true);
 }
 // 3. Exact source spans, same professional colors.
@@ -89,18 +106,33 @@ function gridAxis(s,x,y,w,h,xmin,xmax,ymin,ymax,xticks,yticks,xlabel='',ylabel='
  }}
  for(let x of [171,619])arrow(s,[[396,367],[x,436]],C.laboratory,2.5);
  text(s,'Selected proposition: biopsy cultures are negative',70,606,665,35,22,C.laboratory,true);
- const pos={clinical:[980,265],laboratory:[865,499],imaging:[1145,499]};let ns={};
- for(const k of keys){let [x,y]=pos[k],self=E.flow.find(e=>e.source===k&&e.target===k).rate;ns[k]=box(s,x-69,y-48,138,96,blend(C[k]),C[k],2,'ellipse');text(s,k==='laboratory'?'Lab / path':k==='clinical'?'Clinical':'Imaging',x-61,y-24,122,28,22,C[k],true,'center');text(s,'Self '+(100*self).toFixed(1)+'%',x-61,y+8,122,24,18,ink,false,'center');}
- const links=[['clinical','laboratory','left','top',885,341],['laboratory','clinical','right','bottom',927,407],['clinical','imaging','right','top',1080,341],['imaging','clinical','left','bottom',1031,407],['laboratory','imaging','right','left',975,463],['imaging','laboratory','bottom','bottom',975,566]];
- for(let [a,b,sa,sb,x,y] of links){let v=E.flow.find(e=>e.source===a&&e.target===b).rate;s.shapes.connect(ns[a],ns[b],{kind:sa==='bottom'?'curved':'straight',fromSide:sa,toSide:sb,line:{fill:C[a],width:1+v*10},tail:{type:'triangle',width:'sm',length:'sm'}});box(s,x-4,y-3,62,28,'#ffffff');text(s,(100*v).toFixed(1)+'%',x,y,62,25,18,C[a],true);}
+ const pos={clinical:[1008,270],laboratory:[864,493],imaging:[1150,493]},radius=65;
+ for(const a of keys)for(const b of keys){if(a===b)continue;
+  const p=pos[a],q=pos[b],dx=q[0]-p[0],dy=q[1]-p[1],d=Math.hypot(dx,dy);
+  const ctrl=[(p[0]+q[0])/2-dy/d*72,(p[1]+q[1])/2+dx/d*72];
+  const outside=(center,r)=>{const dx=ctrl[0]-center[0],dy=ctrl[1]-center[1],d=Math.hypot(dx,dy);return [center[0]+dx/d*r,center[1]+dy/d*r];};
+  const start=outside(p,radius+3),end=outside(q,radius+7);
+  const curve=t=>[(1-t)**2*start[0]+2*(1-t)*t*ctrl[0]+t*t*end[0],(1-t)**2*start[1]+2*(1-t)*t*ctrl[1]+t*t*end[1]];
+  const v=E.flow.find(e=>e.source===a&&e.target===b).rate;
+  arrow(s,Array.from({length:65},(_,i)=>curve(i/64)),C[a],1+v*10);
+  const mid=curve(.5);box(s,mid[0]-32,mid[1]-14,64,28,'#FFFFFF');text(s,(100*v).toFixed(1)+'%',mid[0]-31,mid[1]-11,62,25,18,C[a],true,'center');
+ }
+ for(const k of keys){let [x,y]=pos[k],self=E.flow.find(e=>e.source===k&&e.target===k).rate;box(s,x-radius,y-radius,2*radius,2*radius,blend(C[k]),C[k],2,'ellipse');text(s,k==='laboratory'?'Lab / path':k==='clinical'?'Clinical':'Imaging',x-61,y-24,122,28,22,C[k],true,'center');text(s,'Self '+(100*self).toFixed(1)+'%',x-61,y+8,122,24,18,ink,false,'center');}
  text(s,'Arrow width = source-fact uptake rate',817,619,402,26,19,muted);
 }
 // 7. Outcome context, native editable line charts.
 {
- const s=slide('Diagnostic outcome depends on the grading rule','Source: findings/medcase24-study/summary.json accuracy. Left: literal-system majority, exact normalized string equality. Right: semantic-system majority, accepted S+L name relation to reference. S means same disease/specificity, L a definite diagnostic hierarchy. This is name-level grading, not clinical fact truth.','24 cases per setting. The two panels use the saved literal and semantic vote definitions. Full uncertainty and agent-level results remain in the study report.');legend(s);
+ const s=slide('Diagnostic outcome depends on the grading rule','Source: findings/medcase24-study/summary.json accuracy. Left: literal-system majority, exact normalized string equality. Right: semantic-system majority, accepted S+L name relation to reference. S means same disease/specificity, L a definite diagnostic hierarchy. This is name-level grading, not clinical fact truth. Shading uses the saved 2,000-resample case-bootstrap pointwise 95% intervals. CI polygons are editable overlays behind transparent native charts, so update them with the chart if data changes.','24 cases per setting. The two panels use the saved literal and semantic vote definitions. Shading: pointwise 95% case-bootstrap CI (2,000 resamples).');legend(s);
  for(const [j,level,key,title] of [[0,'literal_system','exact','Exact diagnosis name'],[1,'semantic_system','fuzzy_inclusive','Same disease or accepted hierarchy']]){
  text(s,title,70+j*610,169,535,50,27,ink,true);
- nativeChart(s,'line',{position:{left:60+j*610,top:228,width:560,height:385},categories:['R1','R2','R3'],series:conds.map((c,i)=>({name:names[i],values:[1,2,3].map(rd=>E.accuracy.find(r=>r.condition===c&&r.round===rd&&r.level===level).metrics[key].mean),line:{fill:cc[i],width:3},marker:{symbol:'circle',size:5}})),hasLegend:false,yAxis:{min:0,max:1,majorUnit:.25,numberFormatCode:'0%',textStyle:{fontSize:18},majorGridlines:{fill:rule,width:1}},xAxis:{textStyle:{fontSize:22},majorGridlines:null}});
+ // Chart plot coordinates are fixed by the original 560 x 385 chart geometry.
+ const xs=[203.667,365.667,527.667].map(x=>x+j*610),Y=v=>574-337*v;
+ for(const [i,c] of conds.entries()){
+  const st=[1,2,3].map(rd=>E.accuracy.find(r=>r.condition===c&&r.round===rd&&r.level===level).metrics[key]);
+  if(st.some(r=>r.n!==24||r.lo>r.mean||r.hi<r.mean))throw new Error('Invalid accuracy interval');
+  polygon(s,[...st.map((r,k)=>[xs[k],Y(r.lo)]),...st.map((r,k)=>[xs[k],Y(r.hi)]).reverse()],cc[i]+'/12');
+ }
+ nativeChart(s,'line',{chartFill:'none',plotAreaFill:'none',position:{left:60+j*610,top:228,width:560,height:385},categories:['R1','R2','R3'],series:conds.map((c,i)=>({name:names[i],values:[1,2,3].map(rd=>E.accuracy.find(r=>r.condition===c&&r.round===rd&&r.level===level).metrics[key].mean),line:{fill:cc[i],width:3},marker:{symbol:'circle',size:5}})),hasLegend:false,yAxis:{min:0,max:1,majorUnit:.25,numberFormatCode:'0%',textStyle:{fontSize:18},majorGridlines:{fill:rule,width:1}},xAxis:{textStyle:{fontSize:22},majorGridlines:null}});
  }
 }
 // Native editable scatter geometry replicates the PDF point data.
@@ -232,5 +264,5 @@ for(let i=0;i<P.slides.items.length;i++){
  const layout=await s.export({format:'layout'});await fs.writeFile(path.join(build,'preview',String(i+1).padStart(2,'0')+'.layout.json'),await layout.text());console.log('Rendered',i+1);
 }
 await fs.mkdir(path.join(root,'findings/medcase24-validation'),{recursive:true});
-const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v3.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[7,12,13],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v3.json')});
+const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v4.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[7,12,13],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v4.json')});
 console.log(JSON.stringify(result));
