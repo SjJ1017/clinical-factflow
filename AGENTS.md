@@ -358,3 +358,22 @@ same within-round common token budget; the round mean does not merge across roun
 Scatter summaries group by final outcome with colored bands. Boxplots use 2×3
 self/peer × all/final-correct/final-incorrect panels. The all column repeats the
 colored strata, not an additional independent sample. Existing tests remain.
+
+## Cross-round merging and editable slides
+
+`merge_levels.py` defines trace compression C and a direct recurrence companion D.
+C = 1 - pooled output equivalence components / sum of separate-round components.
+Its repeated-presence + bridge decomposition is an exact accounting identity under
+final clusters, not a causal attribution. D does not use cross-round closure; the
+raw-atom check uses no clustering at all. Pair conditions within the same 24 cases.
+All six shared-minus-split contrasts in this audit are exploratory (one BH family).
+See `docs/medcase24-merging.md` for estimates and limitations.
+
+`prepare_slides.py` and `build_slides.mjs` generate the 18-slide editable English
+deck. Keep ClinicalBench's public example distinct from the MedCaseReasoning pilot.
+Instructions: `docs/medcase24-slides.md`. Presentation-library connector `tail`
+points at the destination; `head` points at the source. Inspect the actual arrows.
+Literal chart data needs Excel-safe decimal precision and embedded workbooks.
+Rich data-label overrides can disappear on re-import; stable labels use native
+text overlays. The validation receipt directory must already exist and be outside
+the final-output folder. Finalized files are immutable: export edits to a new name.
