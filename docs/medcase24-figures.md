@@ -1,121 +1,179 @@
 # MedCase24 figure exports
 
-Run `.venv/bin/python scripts/study_report/export_figures.py` after the completed
-study analysis. Install optional `report` dependencies if needed. Verify with
-`.venv/bin/python scripts/study_report/check_figures.py`.
+Generate with `.venv/bin/python scripts/study_report/export_figures.py`; verify and
+package with `.venv/bin/python scripts/study_report/check_figures.py`.
+Install the optional `report` dependencies first. The exporter reruns the offline
+revision audit automatically. It makes no API calls and changes no saved labels.
 
-Outputs live under ignored `findings/medcase24-figures/`. All chart labels are
-English. Charts, heatmap cells and colorbars are vector objects with embedded fonts.
-No model calls, matching changes or label changes are made.
-
-## Contents
+## PDF contents
 
 | PDF | Pages | Content |
 |---|---:|---|
-| 00_all_figures.pdf | 27 | Combined collection, ordered as below |
-| 01_uptake_prime.pdf | 1 | R1/R2/R3, five condition rows, labels only on the left |
-| 02_output_preference.pdf | 2 | Same layout: own-profession output share, then output prime |
-| 03_facts_by_output_tokens.pdf | 4 | All rounds cumulatively, then each round separately |
-| 04_source_uptake_heatmaps.pdf | 2 | R1→R2 / R2→R3, five settings and equal setting mean |
-| 05_correctness_and_final_outcome.pdf | 4 | Each transition: paired panels, then all classified sources |
-| 06_majority_advantage.pdf | 2 | Each transition, 2:1 panels, self/peer rates |
-| 07_correctness_by_majority.pdf | 12 | Each transition for all settings and each setting separately |
+| 00_all_figures.pdf | 22 | Combined collection |
+| 01_uptake_prime.pdf | 1 | R1–R3, paired setting backgrounds and profession-mean connectors |
+| 02_output_preference.pdf | 2 | All output facts: own share, then own minus other share |
+| 03_facts_by_output_tokens.pdf | 4 | Cumulative R1–R3 and each round separately |
+| 04_source_uptake_heatmaps.pdf | 2 | Five settings + equal setting mean per transition |
+| 05_correctness_and_final_outcome.pdf | 2 | Pooled transitions: scatter, then boxplot |
+| 06_majority_advantage.pdf | 2 | Pooled transitions: scatter, then boxplot |
+| 07_correctness_by_majority.pdf | 2 | Six 2×2 grids per page; self retention, then peer uptake |
+| 08_new_fact_preference.pdf | 4 | New-output own share/prime, novelty beyond initial evidence, new-vs-old interaction |
+| 09_paired_role_contrasts.pdf | 3 | Specialist − generic within case, separately for shared/split information |
 
-Twelve additional single-figure PDFs export the individual source heatmaps and
-mean heatmaps separately. `figure-data.json` contains the numerical points and
-summaries; `token-clock.json` contains occurrence events and prefix trajectories;
-`audit.json` and `verification.json` describe provenance and checks.
+Twelve additional PDFs contain individual 3×3 source heatmaps. All plots are
+English vector graphics with embedded fonts. The ZIP includes PDFs, numerical
+points, cached token clocks, audit data, methods and the four figure scripts;
+rebuilding also requires the analysis modules and saved study data in the project.
 
-## Fixed metric choices
+## Fixed definitions
 
-The principal figures retain the already established baseline: within-set
-equivalence components, direct equivalence uptake, fractional original-domain
-labels, saved NLI threshold 5.28. This baseline gives a clear specialist uptake
-prime result and avoids changing definitions between related panels. No condition,
-role, case or round gets its own tuned threshold. Source-rate figures are unweighted
-rates over all source-output units; they have no multi-label weighting operation.
+The baseline remains within-set equivalence components, direct equivalence uptake,
+fractional original-domain labels, and saved NLI threshold 5.28. No per-setting
+threshold tuning or significance-based metric selection is used. Source-uptake
+rates are unweighted fractions of source-output units. Profession colors follow
+actual prompts for mismatched experts, information assignments for split/generic,
+and case-aligned virtual roles for shared/generic.
 
-The output-preference PDF leads with own-profession share, which has the clearer
-reported effect, and also provides output prime (own share minus other share) in
-exactly the same visual layout. Profile points are per-case/agent ratios, with
-profession-specific means and a case-mean overall mean. Undefined prime is omitted
-rather than zero-filled. Source roles use actual mismatched prompts, information
-roles for split/generic, and case-aligned virtual roles for shared/generic.
+The first three profile pages use **all output facts**, including repeats and
+restatements of received information. Own share divides fractional own-domain
+mass by output fact units. Output prime subtracts other-domain share. Clinical is
+history/examination, lab is laboratory/pathology, and imaging is imaging.
+Diagnosis/treatment/other are shared categories: they count in output denominators
+but neither own nor other numerators. Uptake prime instead subtracts two uptake
+rates with separate own/other source denominators. Undefined ratios stay missing.
 
-## Token clock and distinct-fact curves
+Generic and specialist conditions are visually paired using background bands and
+profession-mean connectors. Summary markers distinguish generic (circle), specialist
+(diamond) and mismatch (triangle). The supplementary paired-effect pages subtract
+generic from specialist within the same case and information allocation; zero is
+therefore the direct role-effect reference, unlike the raw profile levels.
 
-The fixed tokenizer is `BAAI/bge-base-en-v1.5`, matching the old project's token
-clock. It is loaded locally without model inference. Output texts are tokenized
-without special tokens, truncation or padding. Browser UTF-16 span offsets are
-converted back to Python character positions. A fact appears when the end of its
-first supporting span has been reached. This intentionally uses **quote end**,
-whereas the old clock recorded quote start; both are proxy positions. Token offsets
-from the full output encoding determine prefix lengths without repeatedly tokenizing
-substrings. Missing spans use the turn end and are explicitly flagged.
+## Novel output facts
 
-- 36,192 / 36,664 output fact mentions locate directly (98.71%).
-- 472 mentions (1.29%) use the end-of-turn fallback.
-- The clock counts visible output text only, not billed tokens, hidden reasoning,
-  inputs, network time or elapsed time. Synchronous turns are ordered round then
-  A/B/C solely for accounting. Seat order is not a causal transmission order.
-- The cumulative curve counts components in the graph of output atoms encountered
-  **so far**. An arriving node can bridge earlier components, so the count can
-  decrease. No future nodes provide bridges. Round-only curves reset both tokens
-  and fact graph at the start of the chosen round.
-- All 480 trace/round endpoint counts reproduce the original report's equivalence
-  totals exactly. The 24-case means use a common absolute-token range ending at the
-  shortest trace in that panel, so all means use the same 24 cases per setting.
-  Complete individual trajectories show the remaining ranges without extrapolating
-  stopped traces or silently changing the sample composition.
+A current output equivalence unit is new when none of its members has identity or
+a direct saved equivalence link to any agent's output in an earlier round. Other
+agents' simultaneous outputs are not prior information. R1 is all new under this
+output-history definition. A second sensitivity view also excludes matches to
+initial evidence. New + old exactly partitions each current output's units.
+These are first-expression proxies under the saved matching, not proof of newly
+created knowledge or of correct inference. No future bridge defines novelty.
+
+The new-vs-old interaction subtracts the specialist−generic effect among old units
+from the same effect among new units, paired by case. It does not infer an
+interaction by comparing two separate confidence intervals. Ratios with no units
+are omitted. All four own-share interactions (shared/split × R2/R3) include zero;
+the data do not establish a stronger role effect on novel facts.
+
+## Token clock and cross-round deduplication
+
+The locally cached `BAAI/bge-base-en-v1.5` tokenizer estimates visible output tokens,
+without special tokens, truncation, padding or hidden reasoning. UTF-16 quote spans
+are converted to Python character positions. Facts enter at the end of their first
+supporting span; the old project used quote start. 36,192/36,664 mentions locate
+(98.71%); the remaining 472 use end of turn and are flagged. Parallel turns are
+ordered by round, then A/B/C solely for accounting, not causal transmission.
+
+Each curve counts components among output atoms seen **so far**. Later nodes may
+bridge components, allowing decreases. Round-only curves reset the graph. All 480
+endpoints reproduce saved fact totals. Mean curves share the minimum complete token
+budget across all 120 traces; full individual trajectories show the remaining range
+without extrapolation or changing sample composition.
+
+For each trace the audit exactly decomposes:
+
+`sum of separate round components − complete trace components = repeated cluster-round presences + cross-round bridge reduction`.
+
+Here cluster-round presence uses the final output-only component partition for a
+**post-hoc accounting identity**, not for the online clock or novelty. The bridge
+term counts extra within-round components that merge when all rounds are included.
+Thus stronger cumulative compression is not entirely simple repeated wording.
+
+| Setting | Sum of round counts | Trace count | Repeat excess | Bridge reduction |
+|---|---:|---:|---:|---:|
+| Shared / generic | 197.00 | 97.46 | 63.33 | 36.21 |
+| Shared / specialist | 214.71 | 105.88 | 65.58 | 43.25 |
+| Split / generic | 211.29 | 132.75 | 53.38 | 25.17 |
+| Split / specialist | 224.21 | 136.58 | 58.33 | 29.29 |
+| Split / mismatched | 226.12 | 133.58 | 57.67 | 34.88 |
+
+Shared conditions lose about 51% of separate-round counts after pooling, versus
+37–39% for matched split conditions (mean per-trace compression). Both greater
+cross-round recurrence and more bridging contribute to the cumulative gap.
+
+## Pooled source scatter, boxplots and inference
+
+R1→R2 and R2→R3 are pooled. Green/red denotes the R3 **system** outcome (correct /
+incorrect). Circle/triangle denotes the **source agent's** diagnosis at the round
+whose facts are offered for uptake (correct / incorrect). Correct = S+L, incorrect
+= D. Unclassified source or final outcomes are excluded from these colored plots.
+Majority comparisons use strict 2:1 panels, with majority/minority shown as two
+bands or two boxplot groups; shapes still denote source correctness in scatter.
+
+Dots are source-recipient edges. Summary statistics first average recipients
+within source, sources within case-condition-round groups, rounds within condition,
+conditions within case, and finally cases. Boxplots show the resulting **case means**,
+not thousands of dependent edges. Median, IQR and 1.5-IQR whiskers are accompanied
+by mean diamonds, 95% case-bootstrap intervals and case counts. Sparse final-error
+cells remain visibly sparse.
+
+Descriptive boxes can contain different cases. Inferential differences separately
+restrict to panels containing both source groups, compute the within-panel gap,
+average rounds/conditions within case, and estimate the mean case gap. Plot n for
+these tests can therefore differ from box n. Δ is correct−incorrect or
+minority−majority. All tests are two-sided case sign flips (exact up to 16 cases,
+100,000 draws above that), assuming symmetric case effects under the null. The
+predefined eight contrasts (two questions × self/peer × final correct/incorrect)
+receive BH-adjusted q values. Exact p/q are shown rather than stars; <.001 never
+prints as .000. Missing inference at fewer than two cases is not zero significance.
+
+The JSON additionally retains Student-t sensitivity intervals. For failed-final
+peer uptake the bootstrap interval is negative but there are only three paired
+cases: the t interval crosses zero and sign-flip p=.25, q=.40. This does not establish
+a reliable reversal or a mechanism of subjective correctness. These figures show
+associations, not causal effects of making a diagnosis correct.
 
 ## Heatmaps
 
-Source-uptake prime maps use source profession on rows and recipient profession on
-columns. Own/other categories are relative to the recipient. Diagonal cells are
-self retention. Compute each case's prime first, then average; missing professional
-denominators remain NA. The overall grid is the arithmetic mean of the five setting
-cell means, not a ratio of pooled fact counts. Both transitions use the same
-symmetric color scale. Individual single-heatmap PDFs use that same scale.
+The 3×3 source-prime maps retain separate transitions. Rows are source professions,
+columns recipient professions; own/other are relative to the recipient. Diagonal
+cells are self retention. Overall means give each setting mean equal weight.
 
-Correctness × majority grids instead show mean unweighted source uptake rates,
-with correct S+L / incorrect D rows and majority / minority columns. Self and peer
-rates are separate panels. They include all eligible sources per cell, so different
-cells may use different cases. They are descriptive cell means, not matched causal
-contrasts. Correct-minority cells DO have observations (3 cases at R1, 2 at R2 in
-the pooled view); the missing design cell from earlier analysis was the **joint
-panel condition** correct minority versus two D majority agents. Do not conflate
-the marginal source cell with that stronger conflict criterion. NA and n=1/n<5
-cells retain explicit sparse-data markings.
+The 2×2 correctness × majority maps pool both transitions, with five settings and
+an overall map on each page: self retention first, peer uptake second. They include
+all sources with known correctness in strict 2:1 panels, including traces with an
+unclassified final outcome because final outcome is not a grouping variable here.
+Cells show mean, independent case n and a 95% case-bootstrap interval. Empty cells
+remain NA. The overall cell is the equal mean of **available** setting-cell means;
+its k/5 coverage is explicit. Overall intervals jointly resample the same case IDs
+across settings, preserving repeated-case dependence. Correct minority is an
+observed marginal cell; it is not equivalent to a correct minority opposed by two
+incorrect majority agents.
 
-## Source scatter plots and confidence intervals
+## Clinical pattern audit
 
-Every plotted point is one source-recipient edge. A self source contributes one
-edge; a peer source contributes two. Role color follows the source. Shapes encode
-S+L versus D, or majority versus minority. Columns show all final outcomes, final
-S+L, and final D; the first column overlaps the other columns by design and can
-include final-U traces. The two main rows are self retention and peer uptake.
-Separate summary strips beneath the dots show source-group means and intervals.
+The clinical prompt explicitly specializes in history, symptoms, bedside
+examination and temporal course. The data cannot attribute a difference to an
+underspecified generalist prompt. The role's label taxonomy is also broader than
+imaging, and diagnosis is shared rather than credited to clinical.
 
-The primary correctness pages restrict to case/condition/round panels containing
-both source groups, reproducing the earlier within-panel reversal comparison.
-Companion pages plot all classified source edges and their descriptive means;
-those groups need not share cases. Majority pages use all strict 2:1 panels.
-Unanimous, three-way disagreement and nontransitive synonym triples are excluded.
+R1 split clinical prime is defined in only 14/24 cases; the other-profession input
+mass has median 1, compared with about 24 for own mass. This makes R1 comparisons
+unstable. Restricting both denominators to at least 3 leaves only 7 cases and does
+**not** eliminate the negative specialist clinical prime; denominator imbalance
+therefore does not fully explain it. Later rounds have all 24 denominators defined.
 
-Means first average recipient edges within source, then sources within each
-case-condition panel, then panels within case, then cases. Thus a large number of
-edges does not masquerade as independent cases. Dark intervals are the 2,000-draw
-case bootstrap; thin gray intervals are Student-t sensitivity based on case means,
-clipped to 0–100% for the rate axis. Intervals are unavailable at n<2. Point data and
-unclipped interval values remain in JSON. Final-error sparse panels do not establish
-subjective cognition, and correctness of a diagnosis does not certify each fact.
+The alleged opposite trajectory is not universal: in split/specialist output,
+clinical, lab and imaging own shares all decline from R1 to R3. More decisively,
+R3 specialist−generic uptake-prime differences are positive for all three roles
+in both shared and split settings. Clinical can have a negative raw prime while
+still showing a positive role effect. The paired-effect PDF makes this distinction
+visible without changing metric definitions.
 
-## Verification and HTML
+## Verification
 
-Numerical checks reproduce prior role means, the within-panel correctness and
-majority contrasts, all token-curve endpoints, and equal-setting heatmap means.
-The 20 PDFs have 27 master pages, with no embedded raster images or text outside
-page bounds. Master pages were rendered and visually checked. The HTML report's
-scatter labels now occur only on the left; its directed source diagrams are replaced
-with interactive prime heatmaps. It links all figure families and the ZIP bundle.
-The existing report control tests were updated for heatmap cells and still pass.
+Checks reproduce original profile means, 480 token endpoints, pooled source case
+means and within-panel inference, equal-setting map means, the repetition accounting
+identity, and exhaustive new/old partitions. PDFs are checked for text outside page
+bounds and embedded raster images, rendered for visual inspection, and packaged
+with checksums. `revision-analysis.json` retains the full exploratory audits and
+paired effects. No additional model calls or billing occurred.

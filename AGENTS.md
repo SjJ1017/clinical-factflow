@@ -324,3 +324,25 @@ docs/pitfall-audit.md and docs/dataset-feasibility.md before changing the pipeli
 - HTML source diagrams are now prime heatmaps (receiver-relative categories), with
   an equal-setting average. Scatter setting labels appear only in the left panel.
   Existing controls still work; tests assert heatmap cell counts rather than arrows.
+
+
+## 2026-09-11 · Pooled figure revision
+
+`export_figures.py` now generates 22 master pages / 22 PDF files. Source correctness
+and majority PDFs pool transitions, with final-system red/green and source-round
+correctness shapes; boxplots use case means. `pooled_figures.py` and
+`analyze_figure_revision.py` implement the pooled hierarchy and paired contrasts.
+Do not omit round from source keys: `(case, condition, round, seat)` is required.
+Tests pair groups within panel before averaging within cases; 8 planned tests share
+a BH family. Final-U is omitted only from final-colored plots, not factorial maps.
+The factorial PDF has two pages, six maps each. Missing setting cells stay missing
+and overall coverage is marked k/5.
+
+Cumulative reduction includes cross-round repetition AND bridge merging, not just
+repeated text. The audit identity separates both. All-output preference is not
+novelty; new-output units exclude direct-equivalence matches to all previous-round
+outputs. New-vs-old role-effect interactions currently all cross zero for own
+share. Clinical's raw negative prime is not an opposite specialist effect: R3
+specialist−generic uptake-prime differences are positive for all professions.
+Details and exact definitions: `docs/medcase24-figures.md`. Outputs remain ignored;
+regenerate locally, no API. PDF verification checks counts, bounds and vectors.

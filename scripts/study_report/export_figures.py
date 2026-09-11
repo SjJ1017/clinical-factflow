@@ -22,7 +22,7 @@ CN={'shared-generic':'Shared / generic','shared-specialist':'Shared / specialist
 FN={'clinical':'Clinical','laboratory':'Lab / pathology','imaging':'Imaging'}
 BASE={'unit':'equivalence','scheme':'fractional','match':'equivalence'}
 plt.rcParams.update({'font.family':'DejaVu Sans','font.size':9,'axes.titlesize':12,'axes.labelsize':10,'pdf.fonttype':42,'ps.fonttype':42,'axes.spines.top':False,'axes.spines.right':False,'axes.edgecolor':'#abb8b8','xtick.color':'#41565b','ytick.color':'#41565b','text.color':'#243b43','axes.labelcolor':'#243b43','savefig.facecolor':'white'})
-FIGS=[];DETAILS={};AUDIT={'api_calls':0,'selected_profile_algorithm':BASE,'ci':'95% case bootstrap (2000 draws); source scatter summaries additionally show t sensitivity','point_unit':'case-agent for profiles; source-recipient edge for source scatter'}
+FIGS=[];DETAILS={};AUDIT={'api_calls':0,'selected_profile_algorithm':BASE,'ci':'95% case bootstrap (2000 draws); paired sign-flip p and BH q; t sensitivity retained in revision JSON','point_unit':'case-agent for profiles; source-recipient edge for source scatter'}
 
 def select(r,**kw):return all(r.get(k)==v for k,v in kw.items())
 def jitter(key,scale=.15):return (int(hashlib.sha256(str(key).encode()).hexdigest()[:8],16)/0xffffffff-.5)*2*scale
@@ -61,6 +61,12 @@ def profile_fig(rows,metric,title,path,percent=False):
     summary=[]
     for rd,ax in zip([1,2,3],axes):
         ax.set_title(f'R{rd}',fontweight='bold',pad=14);ax.axvline(0,color='#95a9aa',lw=.8,ls='--',zorder=0);ax.grid(axis='x',color='#e5e9e9',lw=.6);ax.set_axisbelow(True)
+        # Pair adjacent generic/specialist settings visually; connectors join profession means.
+        for low,high,shade in [(0,1,'#edf3f8'),(2,3,'#edf6f2')]:
+            ax.axhspan(low-.45,high+.55,color=shade,zorder=0)
+            for j,f in enumerate(FIELDS):
+                ms=[stats([r for r in rows if r['condition']==CONDS[q] and r['round']==rd and r['field']==f],metric)['mean'] for q in [low,high]]
+                if all(v is not None for v in ms):ax.plot(ms,[low+.29+j*.073,high+.29+j*.073],color=FC[f],alpha=.35,lw=1,zorder=1)
         for i,c in enumerate(CONDS):
             ps=[r for r in rows if r['condition']==c and r['round']==rd]
             assert len(ps)==72
@@ -70,13 +76,13 @@ def profile_fig(rows,metric,title,path,percent=False):
                 st=stats([r for r in ps if f=='all' or r['field']==f],metric);y=i+.29+j*.073;color=FC.get(f,'#223c43')
                 if st['mean'] is not None:
                     if st['lo'] is not None:ax.plot([st['lo'],st['hi']],[y,y],color=color,lw=1.5)
-                    ax.scatter(st['mean'],y,marker='D',s=17,color=color,zorder=3)
+                    ax.scatter(st['mean'],y,marker=('o' if c.endswith('generic') else '^' if c.endswith('mismatched') else 'D'),s=24,color=color,zorder=3)
                 summary.append({'condition':c,'round':rd,'field':f,'metric':metric,**st})
             missing=sum(r[metric] is None for r in ps)
             ax.text(.98,i-.29,f'{72-missing}/72'+(f'  |  NA {missing}' if missing else ''),ha='right',va='center',fontsize=7.5,color='#6b7b80',transform=ax.get_yaxis_transform())
         ax.set_ylim(4.85,-.55);ax.set_yticks(range(5));ax.tick_params(axis='y',length=0,pad=15);ax.xaxis.set_major_formatter(PercentFormatter(1,decimals=0));ax.set_xlim((0,1) if percent else (-1,1));ax.set_xticks([0,.25,.5,.75,1] if percent else [-1,-.5,0,.5,1]);ax.set_xlabel('Own-profession output share' if percent else ('Own - other output share' if metric=='output_prime' else 'Own - other uptake rate'))
     axes[0].set_yticklabels([CN[c] for c in CONDS],fontweight='normal')
-    foot(fig,'Dots: case-agent ratios. Diamonds and bars: mean and 95% case-bootstrap CI. Undefined ratios are omitted, not set to zero.')
+    foot(fig,'Dots: case-agent ratios; summary circles = generic, diamonds = specialist, triangles = mismatch. Bars: 95% case-bootstrap CI.\nShaded pairs and connectors compare generic / specialist under the same information setting. Undefined ratios are omitted.')
     DETAILS[path.stem]={'metric':metric,'algorithm':BASE,'summary':summary,'points':[{k:r[k] for k in ['case','condition','round','seat','field',metric]} for r in rows]}
     return fig
 
@@ -192,85 +198,6 @@ def flow_figs(raw):
     FIGS.append(OUT/'04_source_uptake_heatmaps.pdf')
 
 
-def source_pop(edges,kind,rd,outcome,paired=True):
-    good={'S','L'}
-    rs=[r for r in edges if r['round']==rd and (outcome=='all' or outcome=='correct' and r['final_label'] in good or outcome=='wrong' and r['final_label']=='D')]
-    if kind=='correctness':rs=[r for r in rs if r['label'] in good|{'D'}]
-    else:rs=[r for r in rs if r['panel_kind']=='two_one']
-    def group(r):return ('Correct' if r['label'] in good else 'Incorrect') if kind=='correctness' else ('Majority' if r['status']=='majority' else 'Minority')
-    for r in rs:r['group']=group(r)
-    if paired:
-        groups=defaultdict(set)
-        for r in rs:groups[(r['case'],r['condition'])].add(r['group'])
-        rs=[r for r in rs if len(groups[(r['case'],r['condition'])])==2]
-    return rs
-
-def group_stats(rs):
-    # A source contributes one self rate or a mean across its two peer edges.
-    sources=defaultdict(list)
-    for r in rs:sources[(r['case'],r['condition'],r['seat'])].append(r['rate'])
-    panels=defaultdict(list)
-    for (case,cond,seat),v in sources.items():panels[(case,cond)].append(avg(v))
-    return stats([{'case':case,'value':avg(v)} for (case,cond),v in panels.items()])
-
-def source_fig(edges,kind,rd,paired=True):
-    fig=plt.figure(figsize=(13.8,10));gs=fig.add_gridspec(4,3,height_ratios=[2.45,.85,2.45,.85],left=.085,right=.985,top=.85,bottom=.13,hspace=.46,wspace=.14)
-    labels=['Correct','Incorrect'] if kind=='correctness' else ['Majority','Minority'];markers={labels[0]:'o',labels[1]:'^'}
-    title='Diagnosis correctness and subsequent fact uptake' if kind=='correctness' else 'Majority status and subsequent fact uptake'
-    fig.suptitle(f'{title} - R{rd} to R{rd+1}',fontsize=16,y=.985)
-    role_legend(fig,[Line2D([],[],marker=markers[g],ls='',color='#334b52',label=g,markersize=6) for g in labels])
-    records=[]
-    for col,outcome in enumerate(['all','correct','wrong']):
-        pop=source_pop([dict(e) for e in edges],kind,rd,outcome,paired)
-        for ri,receiver in enumerate(['self','peers']):
-            ax=fig.add_subplot(gs[2*ri,col]);sm=fig.add_subplot(gs[2*ri+1,col]);rs=[r for r in pop if (r['seat']==r['target'])==(receiver=='self')]
-            for k,g in enumerate(labels):
-                ps=[r for r in rs if r['group']==g]
-                for r in ps:
-                    if r['rate'] is None:continue
-                    ax.scatter(k+jitter((r['case'],r['condition'],r['seat'],r['target']),.26),r['rate'],s=18,marker=markers[g],c=FC[r['field']],alpha=.57,linewidths=0,zorder=2)
-                st=group_stats(ps);y=1-k
-                if st['mean'] is not None:
-                    if st['t_lo'] is not None:sm.plot([max(0,st['t_lo']),min(1,st['t_hi'])],[y,y],color='#b6c0c2',lw=1)
-                    if st['lo'] is not None:sm.plot([st['lo'],st['hi']],[y,y],color='#243f48',lw=2.5)
-                    sm.scatter(st['mean'],y,marker=markers[g],s=29,color='#243f48',zorder=3)
-                    sm.text(.995,y,f'n={st["n"]}',ha='right',va='center',fontsize=7.5,transform=sm.get_yaxis_transform())
-                else:sm.text(.5,y,'No eligible sources',ha='center',va='center',fontsize=8,color='#8c969a')
-                records.append({'kind':kind,'round':rd,'paired':paired,'outcome':outcome,'receiver':receiver,'group':g,'edges':len(ps),'sources':len({(r['case'],r['condition'],r['seat']) for r in ps}),'panels':len({(r['case'],r['condition']) for r in ps}),'stat':st})
-            ax.set_xlim(-.55,1.55);ax.set_xticks([0,1],labels);ax.set_ylim(-.025,1.04);ax.set_yticks([0,.25,.5,.75,1]);ax.yaxis.set_major_formatter(PercentFormatter(1));ax.grid(axis='y',alpha=.18)
-            if col==0:ax.set_ylabel('Self retention rate' if ri==0 else 'Peer uptake rate',fontweight='bold')
-            else:ax.set_yticklabels([])
-            if ri==0:ax.set_title({'all':'All final outcomes','correct':'Final vote correct','wrong':'Final vote incorrect'}[outcome],pad=17)
-            npan=len({(r['case'],r['condition']) for r in rs});ncase=len({r['case'] for r in rs});ax.text(.5,1.015,f'{npan} panels / {ncase} cases / {len(rs)} edges',ha='center',transform=ax.transAxes,fontsize=8,color='#697d82')
-            sm.set_ylim(-.5,1.5);sm.set_xlim(0,1.11);sm.set_yticks([1,0],labels if col==0 else ['',''],fontsize=8);sm.set_xticks([0,.5,1]);sm.xaxis.set_major_formatter(PercentFormatter(1));sm.spines[['top','right','left']].set_visible(False);sm.tick_params(axis='y',length=0);sm.set_xlabel('Mean and 95% CI',fontsize=8)
-    foot(fig,('Paired panels with both source groups.' if paired else 'All classified sources; descriptive means are not within-panel contrasts.')+(' Source correctness: S+L versus D.' if kind=='correctness' else ' Majority identity: same-specificity diagnosis synonyms.')+'\nColor: source profession; shape: source group. Every dot is one source-recipient edge; means give equal weight to cases.\nDark bars: bootstrap CI. Thin gray bars: t sensitivity (clipped to 0-100%). Sparse final-error cohorts are exploratory.')
-    DETAILS[f'{kind}-R{rd}-'+('paired' if paired else 'all')]=records
-    return fig
-
-
-def factorial_fig(edges,rd,cond):
-    rs=[r for r in edges if r['round']==rd and r['panel_kind']=='two_one' and r['label'] in ['S','L','D'] and (cond=='all' or r['condition']==cond)]
-    fig,axes=plt.subplots(1,2,figsize=(10.8,5.8));fig.subplots_adjust(left=.14,right=.88,top=.77,bottom=.19,wspace=.35)
-    fig.suptitle(f'Correctness x majority status - R{rd} to R{rd+1}',fontsize=16,y=.98);fig.text(.5,.89,'All five settings' if cond=='all' else CN[cond],ha='center',fontsize=11)
-    rows=[]
-    for ax,receiver in zip(axes,['self','peers']):
-        g=np.full((2,2),np.nan);records={}
-        for i,truth in enumerate(['correct','wrong']):
-            for j,status in enumerate(['majority','minority']):
-                es=[r for r in rs if (r['seat']==r['target'])==(receiver=='self') and r['status']==status and (r['label'] in ['S','L'])==(truth=='correct')];st=group_stats(es)
-                if st['mean'] is not None:g[i,j]=st['mean']
-                records[(i,j)]=st;rows.append({'round':rd,'condition':cond,'receiver':receiver,'correctness':truth,'status':status,'edges':len(es),**st})
-        cmap=plt.get_cmap('YlGnBu').copy();cmap.set_bad('#f0f2f2');im=ax.pcolormesh(np.arange(3)-.5,np.arange(3)-.5,g,vmin=0,vmax=1,cmap=cmap,shading='flat');ax.set_xlim(-.5,1.5);ax.set_ylim(1.5,-.5);ax.set_aspect('equal')
-        for (i,j),st in records.items():
-            text='NA\n0 cases' if st['mean'] is None else f'{st["mean"]*100:.1f}%\nn={st["n"]}'+('*' if st['n']<5 else '') + (f'\n[{st["lo"]*100:.1f}, {st["hi"]*100:.1f}]' if st['lo'] is not None else '\nCI unavailable')
-            ax.text(j,i,text,ha='center',va='center',fontsize=11,color='white' if g[i,j]>.55 else '#243e45')
-        ax.set_xticks([0,1],['Majority','Minority']);ax.set_yticks([0,1],['Correct (S+L)','Incorrect (D)']);ax.set_title('Self retention' if receiver=='self' else 'Peer uptake',pad=13);ax.tick_params(length=0)
-    fig.colorbar(im,cax=fig.add_axes([.92,.24,.025,.47])).ax.yaxis.set_major_formatter(PercentFormatter(1))
-    foot(fig,'Strict 2:1 source-round diagnosis panels. Mean rates, case counts and 95% bootstrap CIs.\nEach cell uses all eligible sources; groups need not share cases/panels. * Fewer than 5 cases: exploratory. NA is not zero.')
-    DETAILS[f'factorial-R{rd}-{cond}']=rows
-    return fig
-
-
 def main():
     OUT.mkdir(exist_ok=True,parents=True);D=json.loads((DEST/'summary.json').read_text());O=json.loads((DEST/'observations.json').read_text());social=json.loads((DEST/'social-uptake-observations.json').read_text())
     profiles=[r for r in O['profiles'] if select(r,**BASE)]
@@ -285,25 +212,19 @@ def main():
     with PdfPages(OUT/'03_facts_by_output_tokens.pdf') as pdf:
         for rd in [0,1,2,3]:f=token_fig(td,rd);pdf.savefig(vectorize(f));plt.close(f)
     FIGS.append(OUT/'03_facts_by_output_tokens.pdf');flow_figs(O)
-    rolemap={(r['case'],r['condition']):r['role_by_seat'] for r in O['role_mapping']}
-    edges=[dict(r,field=rolemap[(r['case'],r['condition'])][r['seat']]) for r in social['edges'] if select(r,unit='equivalence',scope='all',match='equivalence')]
-    DETAILS['source-edge-points']=edges
-    for kind,name in [('correctness','05_correctness_and_final_outcome.pdf'),('majority','06_majority_advantage.pdf')]:
-        with PdfPages(OUT/name) as pdf:
-            for rd in [1,2]:
-                for paired in ([True,False] if kind=='correctness' else [True]):f=source_fig(edges,kind,rd,paired);pdf.savefig(vectorize(f));plt.close(f)
-        FIGS.append(OUT/name)
-    with PdfPages(OUT/'07_correctness_by_majority.pdf') as pdf:
-        for cond in ['all']+CONDS:
-            for rd in [1,2]:f=factorial_fig(edges,rd,cond);pdf.savefig(vectorize(f));plt.close(f)
-    FIGS.append(OUT/'07_correctness_by_majority.pdf')
-    primary=sorted([p for p in FIGS if p.name[:3] in [f'{i:02d}_' for i in range(1,8)] and not p.name.startswith('04_R')])
+    import sys
+    from pooled_figures import export
+    from analyze_figure_revision import main as revise
+    revise()
+    revision=json.loads((OUT/'revision-analysis.json').read_text())
+    export(sys.modules[__name__],revision,profiles)
+    primary=sorted([p for p in FIGS if p.name[:3] in [f'{i:02d}_' for i in range(1,10)] and not p.name.startswith('04_R')])
     writer=PdfWriter()
     for p in primary:writer.append(p)
     with (OUT/'00_all_figures.pdf').open('wb') as f:writer.write(f)
     FIGS.append(OUT/'00_all_figures.pdf')
     AUDIT['pdfs']={p.name:len(PdfReader(p).pages) for p in sorted(FIGS)};AUDIT['figure_count']=len(FIGS)
-    assert len(FIGS)==20 and len(PdfReader(OUT/'00_all_figures.pdf').pages)==27
+    assert len(FIGS)==22 and len(PdfReader(OUT/'00_all_figures.pdf').pages)==22
     (OUT/'figure-data.json').write_text(json.dumps(DETAILS,separators=(',',':'),allow_nan=False));(OUT/'audit.json').write_text(json.dumps(AUDIT,indent=2))
     print(json.dumps({'pdfs':AUDIT['pdfs'],'token_clock':AUDIT['token_clock']},indent=2))
 if __name__=='__main__':main()
