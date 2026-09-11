@@ -377,3 +377,27 @@ Literal chart data needs Excel-safe decimal precision and embedded workbooks.
 Rich data-label overrides can disappear on re-import; stable labels use native
 text overlays. The validation receipt directory must already exist and be outside
 the final-output folder. Finalized files are immutable: export edits to a new name.
+
+
+## Direct fact-to-outcome audit and mentor deck v6
+
+Read `docs/medcase24-fact-outcome.md` and its frozen exploratory plan before
+extending the outcome audit. `fact_outcome.py`, `fact_outcome_followup.py`, and
+`report_fact_outcome.py` run offline; no new extraction or judge calls are needed.
+Predictors use only R1/R2. Do not form early equivalence components through R3
+nodes. Cluster by case (24), not traces (120) or edges; only 13 cases vary in final
+accepted outcome. U means uncertain, not definitely wrong. No primary metric
+passes BH q < .05 across the 12-feature family.
+
+Correct source diagnosis is not fact-level truth. Removing diagnosis-tagged
+units (including medical reasoning, not only final answers) removes the observed
+correct-source uptake advantage. Original-evidence coverage is promising but its
+association attenuates after controlling R2 correctness. That adjustment does not
+identify direction of causality. The fixed held-out-case model does not show
+incremental Brier benefit from adding fact metrics. Larger n is not a guarantee of
+significance or causal interpretation. See the report for all estimates and CIs.
+
+The editable English deck is now 25 slides, `clinical-factflow-mentor-v6.pptx`.
+Page 2 highlights use 14% opacity; pages 19–25 contain the outcome audit. All
+original pages other than 2 match the v4 rendering. Do not overwrite finalized
+PPTX packages; regenerate to a new path. Files under findings remain local.

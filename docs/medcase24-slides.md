@@ -1,7 +1,7 @@
 # MedCase24 mentor slides
 
-The English 18-slide deck is generated locally at
-`findings/medcase24-slides/clinical-factflow-mentor-v4.pptx`.
+The English 25-slide deck is generated locally at
+`findings/medcase24-slides/clinical-factflow-mentor-v6.pptx`.
 It covers ClinicalBench's public example, the actual MedCaseReasoning case and
 partitions, controlled conditions, extraction/matching, trace links, aggregate
 flow, and selected results. ClinicalBench is not presented as the pilot corpus.
@@ -22,6 +22,9 @@ available locally. There are no API calls.
 ```bash
 .venv/bin/python scripts/study_report/merge_levels.py
 .venv/bin/python scripts/study_report/prepare_slides.py
+.venv/bin/python scripts/study_report/fact_outcome.py
+.venv/bin/python scripts/study_report/fact_outcome_followup.py
+.venv/bin/python scripts/study_report/report_fact_outcome.py
 cp scripts/study_report/build_slides.mjs findings/medcase24-slides/build/build.mjs
 ln -s "$RUNTIME_NODE_MODULES" findings/medcase24-slides/build/node_modules
 "$RUNTIME_NODE" findings/medcase24-slides/build/build.mjs
@@ -37,7 +40,7 @@ local evidence and the PPTX are ignored by Git.
 The finalizer verifies package integrity, font policy, layout geometry, editable
 table and chart presence, and chart/workbook agreement. Numerical chart cells are
 rounded to 10 decimal places for Excel serialization; full precision remains in
-the source JSON. All 18 final slides were rendered for visual review. Native
+the source JSON. All 25 final slides were rendered for visual review. Native
 PowerPoint application opening is not part of this validation.
 
 ## Sources
@@ -58,9 +61,35 @@ or individual edges as independent patients.
 ## Annotated slide refinements
 
 Slide 2 preserves the full original paragraph and marks source-partition spans with
-8%-opacity clinical/lab/imaging frames, using rendered line breaks and Arial font
+14%-opacity clinical/lab/imaging frames, using rendered line breaks and Arial font
 advances. Frames remain separate editable shapes. Slide 6 uses circular nodes and
 curved directed paths, with arrow tips outside the node boundary. Slide 7 adds the
 saved pointwise 95% case-bootstrap intervals (2,000 resamples, 24 cases). Its CI
 bands are editable polygons behind transparent native charts. Update the bands
 when changing chart data or geometry; they are not linked Excel error bands.
+
+## Direct fact-to-outcome audit (slides 19–25)
+
+The additional seven pages cover temporal scope, all 12 primary associations,
+original-evidence coverage sensitivity, diagnosis-content ablation of uptake,
+prior fact overlap, held-out-case prediction, and replication/causal limitations.
+All predictors stop at R2. There are 24 independent cases and only 13 cases whose
+final accepted outcome varies across settings. None of the 12 primary coefficients
+passes BH q < .05. Pointwise CIs use case bootstrap; p and q use case-cluster t
+inference, so their boundaries can differ in this small sample.
+
+R2 original-evidence coverage is the strongest replication candidate. Its link to
+final accuracy attenuates after controlling contemporaneous R2 correctness, which
+cannot distinguish a mediated pathway from a common latent reasoning state.
+Removing diagnosis-tagged units removes the observed correct-source uptake
+advantage; those tags include reasoning, not just final answers. The fixed
+leave-one-case-out model has no incremental Brier improvement from fact metrics.
+Full results and methods: [medcase24-fact-outcome.md](medcase24-fact-outcome.md).
+
+`outcome_slides.mjs` reads the audit JSON and draws editable vector charts. The
+final v6 package was rendered after finalization: all 25 pages rendered, modified
+page 2 and new pages 19–25 visually checked, and the other 17 pages matched v4
+pixel-for-pixel. Structural checks found no warnings; all slides contain native
+text/shapes, with no raster picture objects. Statistical checks independently
+reproduced the coverage coefficient with full dummy-variable OLS and verified
+held-out Brier arithmetic. These checks do not establish causal validity.

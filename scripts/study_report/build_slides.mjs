@@ -59,11 +59,11 @@ function gridAxis(s,x,y,w,h,xmin,xmax,ymin,ymax,xticks,yticks,xlabel='',ylabel='
   const start=raw.indexOf(l.text,offset);if(start<0)throw new Error('Rendered line missing');offset=start+l.text.length;
   for(const sp of spans){const a=Math.max(start,sp.start),b=Math.min(offset,sp.end);if(a>=b)continue;
    const x=62+ctx.measureText(raw.slice(start,a)).width,w=ctx.measureText(raw.slice(a,b)).width;
-   box(s,x-1,187+i*28.8,w+2,27.6,C[sp.category]+'/8',C[sp.category]+'/22',.6);
+   box(s,x-1,187+i*28.8,w+2,27.6,C[sp.category]+'/14',C[sp.category]+'/32',.6);
   }
  }
  body.bringToFront();
- for(const [i,k] of Object.keys(C).entries()){const x=470+i*247;box(s,x,162,17,13,C[k]+'/8',C[k]+'/25',.7);text(s,N[k],x+24,159,235,23,16,muted);}
+ for(const [i,k] of Object.keys(C).entries()){const x=470+i*247;box(s,x,162,17,13,C[k]+'/14',C[k]+'/32',.7);text(s,N[k],x+24,159,235,23,16,muted);}
 
  line(s,[[62,589],[1218,589]],rule,1);text(s,'Reference held out from agents',62,614,370,32,21,muted);text(s,'Chronic recurrent multifocal osteomyelitis',450,610,765,42,27,ink,true);
 }
@@ -255,6 +255,9 @@ sourceBoxes('majority','Minority sources tend to receive less peer uptake');
  text(s,'The mechanism remains open',60,523,1120,40,31,ink,true);
  text(s,'Recurrence can reflect copying or independent reuse. More distinct output can reflect useful complementarity, unresolved disagreement or unsupported claims.',60,577,1138,76,26);
 }
+const outcome=JSON.parse(await fs.readFile(path.join(root,'findings/medcase24-fact-outcome/analysis.json'),'utf8'));
+const {addOutcomeSlides}=await import(path.join(root,'scripts/study_report/outcome_slides.mjs'));
+addOutcomeSlides({D:outcome,slide,text,box,line,arrow,dot,ink,muted,rule,blend});
 await fs.mkdir(path.join(build,'preview'),{recursive:true});
 const candidate=path.join(build,'candidate.pptx');
 await (await PresentationFile.exportPptx(P)).save(candidate);
@@ -264,5 +267,5 @@ for(let i=0;i<P.slides.items.length;i++){
  const layout=await s.export({format:'layout'});await fs.writeFile(path.join(build,'preview',String(i+1).padStart(2,'0')+'.layout.json'),await layout.text());console.log('Rendered',i+1);
 }
 await fs.mkdir(path.join(root,'findings/medcase24-validation'),{recursive:true});
-const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v4.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[7,12,13],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v4.json')});
+const result=await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:process.env.FINAL_PPTX ?? path.join(root,'findings/medcase24-slides/clinical-factflow-mentor-v6.pptx'),pythonExecutable:process.env.RUNTIME_PYTHON ?? '/Users/b787pw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-bullet-geometry','--validate-heading-fit','--require-native-table-slide','4'],requiredNativeTableOwnerSlides:[4],requiredNativeChartOwnerSlides:[7,12,13],materializeLiteralChartWorkbooks:true,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(root,'findings/medcase24-validation/validation-v6.json')});
 console.log(JSON.stringify(result));
